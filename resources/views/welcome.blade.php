@@ -98,8 +98,10 @@
             <div class="bg-azul bg-opacity-70 p-10 rounded-lg">
                 <h2 class="text-5xl font-extrabold mb-4">La Pasión del Fútbol en un Solo Lugar</h2>
                 <p class="text-xl mb-8">Crea, gestiona y compite en tus propios torneos de fútbol.</p>
-                <a href="{{ route('register') }}" class="bg-naranja hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Regístrate ahora</a>
-                <a href="{{ route('login') }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition ml-4">Iniciar Sesión</a>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <a href="{{ route('register') }}" class="bg-naranja hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-lg text-lg transition whitespace-nowrap w-full sm:w-auto">Regístrate ahora</a>
+                    <a href="{{ route('login') }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition whitespace-nowrap w-full sm:w-auto">Iniciar Sesión</a>
+                </div>
             </div>
         </section>
     </div>

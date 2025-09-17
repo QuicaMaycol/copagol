@@ -161,7 +161,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ $index + 1 }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                         <a href="{{ route('equipos.show', $equipo['id']) }}" class="flex items-center group">
-                                            <img class="h-8 w-8 rounded-full object-cover mr-3 border" src="{{ $equipo['imagen_url'] ?: 'https://via.placeholder.com/32' }}" alt="Logo del equipo">
+                                            <img class="h-8 w-8 rounded-full object-cover mr-3 border" src="{{ $equipo['imagen_url'] ?: 'https://ui-avatars.com/api/?name=' . urlencode($equipo['nombre']) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo del equipo">
                                             <span class="font-semibold group-hover:text-blue-700 dark:group-hover:text-blue-400">{{ $equipo['nombre'] }}</span>
                                         </a>
                                     </td>
