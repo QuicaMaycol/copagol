@@ -7,6 +7,7 @@ use App\Http\Controllers\JugadorController;
 use App\Http\Controllers\FaseController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController; // Added
+use App\Http\Controllers\PartidoController; // Added
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,6 +39,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/partidos/{partido}', [CampeonatoController::class, 'updateMatch'])->name('partidos.update');
     Route::delete('/partidos/{partido}', [CampeonatoController::class, 'destroyMatch'])->name('partidos.destroy');
     Route::get('/partidos/{partido}/estadisticas', [CampeonatoController::class, 'getMatchStatistics'])->name('partidos.estadisticas');
+    Route::get('/partidos/{partido}/sancionados', [PartidoController::class, 'getSancionados'])->name('partidos.sancionados');
+
+    // Rutas para la gestión de sanciones
+    
+    Route::post('/partidos/{partido}/finalizar-sanciones', [PartidoController::class, 'actualizarSancionesPostPartido'])->name('partidos.finalizar-sanciones');
 
     Route::resource('equipos', EquipoController::class)->except(['index']); // Assuming you don't need a general index of all teams
 

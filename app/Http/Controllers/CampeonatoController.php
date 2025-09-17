@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Http\Controllers\PartidoController;
 
 class CampeonatoController extends Controller
 {
@@ -141,11 +142,8 @@ class CampeonatoController extends Controller
 
         $campeonato->load('organizador', 'delegates', 'partidos.equipoLocal', 'partidos.equipoVisitante', 'fases'); // Load organizador, delegates, matches, and phases. Removed .jugadores from partidos relations as it's not directly used here and can be heavy.
 
-        // Get all suspended players from all teams in this championship
-        $suspendedPlayers = collect();
-        foreach ($campeonato->equipos as $equipo) {
-            $suspendedPlayers = $suspendedPlayers->merge($equipo->jugadores->where('suspendido', true));
-        }
+        // Get all suspended players from all teams in this championship using the helper method
+        $suspendedPlayers = PartidoController::generarListaSuspendidos($campeonato);
 
         // Prepare a list of suspended players for each match
         $suspendedPlayersByMatch = [];
@@ -613,8 +611,8 @@ class CampeonatoController extends Controller
             'jugadores' => 'array',
             'jugadores.*.goles' => 'nullable|integer|min:0',
             'jugadores.*.asistencias' => 'nullable|integer|min:0',
-            'jugadores.*.amarillas' => 'nullable|integer|min:0',
-            'jugadores.*.rojas' => 'nullable|integer|min:0',
+            'jugadores.*.amarillas' => 'nullable|integer|min:0|max:2',
+            'jugadores.*.rojas' => 'nullable|integer|min:0|max:1',
         ]);
 
         // Check for conflicts: a team cannot play twice on the same date
@@ -671,29 +669,53 @@ class CampeonatoController extends Controller
             'equipo_visitante_id' => $validatedData['equipo_visitante_id'],
         ]);
 
-        // Update player statistics (logic from storeResult)
-        if (isset($validatedData['jugadores'])) {
-            foreach ($validatedData['jugadores'] as $jugadorId => $stats) {
-                $jugador = \App\Models\Jugador::find($jugadorId);
-                if ($jugador) {
-                    // Update overall player stats
-                    $jugador->goles += ($stats['goles'] ?? 0);
-                    $jugador->tarjetas_amarillas += ($stats['amarillas'] ?? 0);
-                    $jugador->tarjetas_rojas += ($stats['rojas'] ?? 0);
-                    $jugador->save();
+        // --- RECALCULATE PLAYER STATS AND APPLY SUSPENSIONS ---
+        $allPlayerIds = $partido->equipoLocal->jugadores->pluck('id')->merge($partido->equipoVisitante->jugadores->pluck('id'));
 
-                    // Save match-specific player statistics
-                    \App\Models\PartidoJugadorEstadistica::updateOrCreate(
-                        ['partido_id' => $partido->id, 'jugador_id' => $jugador->id],
-                        [
-                            'goles' => ($stats['goles'] ?? 0),
-                            'asistencias' => ($stats['asistencias'] ?? 0),
-                            'tarjetas_amarillas' => ($stats['amarillas'] ?? 0),
-                            'tarjetas_rojas' => ($stats['rojas'] ?? 0),
-                        ]
-                    );
+        foreach ($allPlayerIds as $jugadorId) {
+            $jugador = \App\Models\Jugador::find($jugadorId);
+            if (!$jugador) continue;
+
+            // Update match-specific stats from the form
+            $stats = $validatedData['jugadores'][$jugadorId] ?? [
+                'goles' => 0, 'asistencias' => 0, 'amarillas' => 0, 'rojas' => 0
+            ];
+            
+            \App\Models\PartidoJugadorEstadistica::updateOrCreate(
+                ['partido_id' => $partido->id, 'jugador_id' => $jugadorId],
+                [
+                    'goles' => $stats['goles'] ?? 0,
+                    'asistencias' => $stats['asistencias'] ?? 0,
+                    'tarjetas_amarillas' => $stats['amarillas'] ?? 0,
+                    'tarjetas_rojas' => $stats['rojas'] ?? 0,
+                ]
+            );
+
+            // Recalculate total stats from scratch for accuracy
+            $jugador->goles = $jugador->estadisticas()->sum('goles');
+            $jugador->tarjetas_amarillas = $jugador->estadisticas()->sum('tarjetas_amarillas');
+            $jugador->tarjetas_rojas = $jugador->estadisticas()->sum('tarjetas_rojas');
+            
+            // Reset suspension status before re-evaluating
+            $jugador->suspendido = false;
+            $jugador->suspended_until_match_id = null;
+
+            // Apply suspension logic
+            $nextMatch = $this->getNextMatchForTeam($partido->campeonato, $jugador->equipo, $partido);
+
+            if ($nextMatch) {
+                // Red card suspension
+                if (($stats['rojas'] ?? 0) > 0) {
+                    $jugador->suspendido = true;
+                    $jugador->suspended_until_match_id = $nextMatch->id;
+                } 
+                // Accumulated yellow cards suspension (every 2 yellow cards)
+                elseif (($stats['amarillas'] ?? 0) > 0 && $jugador->tarjetas_amarillas > 0 && ($jugador->tarjetas_amarillas % 2 === 0)) {
+                    $jugador->suspendido = true;
+                    $jugador->suspended_until_match_id = $nextMatch->id;
                 }
             }
+            $jugador->save();
         }
 
         return Redirect::route('campeonatos.show', $partido->campeonato)->with('success', 'Partido actualizado con éxito.');

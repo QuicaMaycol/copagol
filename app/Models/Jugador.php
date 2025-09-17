@@ -28,6 +28,7 @@ class Jugador extends Model implements Auditable
         'valoracion_general',
         'fecha_nacimiento',
         'suspended_until_match_id',
+        'tipo_sancion',
         // 🔴 ALERTA: Los siguientes campos están pendientes de ser integrados completamente en el modelo y controlador.
         // Se están generando en el factory, pero no están en la migración ni en la lógica del controlador.
         // 'email',

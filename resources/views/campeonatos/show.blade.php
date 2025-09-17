@@ -96,7 +96,26 @@
             @endif
         @endauth
         <!-- Main Content -->
-        <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="{ activeTab: 'partidos' }">
+        <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="{ 
+            activeTab: 'partidos', 
+            showSancionadosModal: false,
+            sancionados: [],
+            conAmarilla: [],
+            loading: false,
+            getSancionados(partidoId) {
+                this.loading = true;
+                this.sancionados = [];
+                this.conAmarilla = [];
+                this.showSancionadosModal = true;
+                fetch(`/partidos/${partidoId}/sancionados`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.sancionados = data.sancionados;
+                        this.conAmarilla = data.conAmarilla;
+                        this.loading = false;
+                    });
+            } 
+        }">
             <!-- Tab Navigation -->
             <div class="border-b-2 border-gray-200 mb-6 flex overflow-x-auto space-x-6">
                 <button @click="activeTab = 'tabla'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'tabla', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'tabla' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
@@ -110,6 +129,9 @@
                 </button>
                 <button @click="activeTab = 'fairplay'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'fairplay', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'fairplay' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
                     Fair Play
+                </button>
+                <button @click="activeTab = 'sancionados'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'sancionados', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'sancionados' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
+                    Sancionados
                 </button>
             </div>
             
@@ -260,19 +282,24 @@
                                         @foreach($partidosEnJornada as $partido)
                                         <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 border-blue-500 dark:border-blue-700">
                                             <div class="flex items-center space-x-3">
-                                                <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://via.placeholder.com/32' }}" alt="Logo Equipo Local">
+                                                <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoLocal->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Local">
                                                 <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoLocal->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoLocal->nombre }}</span>
                                             </div>
                                             <span class="text-gray-500 text-sm font-bold">vs</span>
                                             <div class="flex items-center space-x-3">
                                                 <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoVisitante->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoVisitante->nombre }}</span>
-                                                <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://via.placeholder.com/32' }}" alt="Logo Equipo Visitante">
+                                                <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoVisitante->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Visitante">
                                             </div>
-                                            @can('manage-campeonato', $campeonato)
-                                            <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                            </a>
-                                            @endcan
+                                            <div class="flex items-center space-x-2">
+                                                <button @click="getSancionados({{ $partido->id }})" class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-full transition-colors duration-300" title="Ver Sancionados">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                                </button>
+                                                @can('manage-campeonato', $campeonato)
+                                                <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300" title="Editar Partido">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                </a>
+                                                @endcan
+                                            </div>
                                         </div>
                                         @endforeach
                                     </div>
@@ -302,25 +329,25 @@
                                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border-l-4 {{ $partido->goles_local > $partido->goles_visitante ? 'border-green-500' : ($partido->goles_local < $partido->goles_visitante ? 'border-red-500' : 'border-yellow-500') }}">
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center space-x-3">
-                                                    <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://via.placeholder.com/32' }}" alt="">
-                                                    <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $partido->equipoLocal->nombre_equipo }}</span>
+                                                    <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoLocal->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
+                                                    <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $partido->equipoLocal->nombre }}</span>
                                                 </div>
                                                 <div class="text-center">
                                                     <span class="text-xl font-bold">{{ $partido->goles_local }} - {{ $partido->goles_visitante }}</span>
                                                     <p class="text-xs text-gray-400">Finalizado</p>
+                                                    @can('manage-campeonato', $campeonato)
+                                                    <div class="mt-2">
+                                                        <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300 inline-block">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                        </a>
+                                                    </div>
+                                                    @endcan
                                                 </div>
                                                 <div class="flex items-center space-x-3">
-                                                    <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $partido->equipoVisitante->nombre_equipo }}</span>
-                                                    <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://via.placeholder.com/32' }}" alt="">
+                                                    <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $partido->equipoVisitante->nombre }}</span>
+                                                    <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoVisitante->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
                                                 </div>
                                             </div>
-                                            @can('manage-campeonato', $campeonato)
-                                            <div class="mt-3 flex justify-end">
-                                                <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                </a>
-                                            </div>
-                                            @endcan
                                         </div>
                                         @endforeach
                                     </div>
@@ -540,6 +567,105 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Sancionados Modal -->
+            <div
+                x-show="showSancionadosModal"
+                x-on:keydown.escape.window="showSancionadosModal = false"
+                class="fixed inset-0 z-50 overflow-y-auto"
+                aria-labelledby="modal-title"
+                role="dialog"
+                aria-modal="true"
+                style="display: none;"
+            >
+                <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                    <!-- Background overlay -->
+                    <div x-show="showSancionadosModal"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+                         @click="showSancionadosModal = false"
+                         aria-hidden="true"></div>
+
+                    <!-- Modal panel -->
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                    <div x-show="showSancionadosModal"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         class="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
+
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100" id="modal-title">
+                            Jugadores en Riesgo
+                        </h3>
+
+                        <div class="mt-4">
+                            <div x-show="loading" class="text-center py-8">
+                                <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <p class="text-gray-500 dark:text-gray-400 mt-2">Cargando...</p>
+                            </div>
+
+                            <div x-show="!loading">
+                                <!-- Suspendidos -->
+                                <h4 class="text-lg font-semibold text-red-600 dark:text-red-500 mt-4 mb-2">Suspendidos para este partido</h4>
+                                <div x-show="sancionados.length > 0">
+                                    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                                        <template x-for="jugador in sancionados" :key="jugador.nombre">
+                                            <li class="py-2 flex justify-between items-center">
+                                                <div>
+                                                    <p class="font-medium text-gray-800 dark:text-gray-200" x-text="jugador.nombre"></p>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400" x-text="jugador.equipo"></p>
+                                                </div>
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800" x-text="jugador.tipo_sancion"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div x-show="sancionados.length === 0">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">No hay jugadores suspendidos para este partido.</p>
+                                </div>
+
+                                <!-- Con Amarilla -->
+                                <h4 class="text-lg font-semibold text-yellow-600 dark:text-yellow-500 mt-6 mb-2">Apercibidos (con Tarjeta Amarilla)</h4>
+                                <div x-show="conAmarilla.length > 0">
+                                    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                                        <template x-for="jugador in conAmarilla" :key="jugador.nombre">
+                                            <li class="py-2 flex justify-between items-center">
+                                                <div>
+                                                    <p class="font-medium text-gray-800 dark:text-gray-200" x-text="jugador.nombre"></p>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400" x-text="jugador.equipo"></p>
+                                                </div>
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800" x-text="jugador.cantidad + ' Amarilla(s)'"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                 <div x-show="conAmarilla.length === 0">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">No hay jugadores con tarjetas amarillas en los equipos de este partido.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button @click="showSancionadosModal = false" type="button" class="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 </x-app-layout>
