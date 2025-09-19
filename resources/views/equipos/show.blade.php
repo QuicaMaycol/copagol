@@ -48,7 +48,7 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 @foreach($jugadores as $jugador)
-                    @if($canManage)
+                    @if($canManage && $equipo->campeonato->registrations_open)
                         <a href="{{ route('equipos.jugadores.edit', ['equipo' => $equipo->id, 'jugador' => $jugador->id]) }}" class="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-xl cursor-pointer block" data-aos="zoom-in">
                     @else
                         <div class="bg-white rounded-lg shadow-md overflow-hidden block" data-aos="zoom-in">
@@ -114,7 +114,7 @@
                             </div>
                             @endif
                         </div>
-                    @if($canManage)
+                    @if($canManage && $equipo->campeonato->registrations_open)
                         </a>
                     @else
                         </div>

@@ -49,7 +49,7 @@
                         <!-- Número de Camiseta -->
                         <div class="mt-4">
                             <x-input-label for="numero_camiseta" :value="__('Número de Camiseta')" />
-                            <x-text-input id="numero_camiseta" class="block mt-1 w-full" type="number" name="numero_camiseta" :value="old('numero_camiseta', $jugador->numero_camiseta)" />
+                            <x-text-input id="numero_camiseta" class="block mt-1 w-full" type="number" name="numero_camiseta" :value="old('numero_camiseta', $jugador->numero_camiseta)" :disabled="$registrationsClosed && !$isOrganizer" />
                             <x-input-error :messages="$errors->get('numero_camiseta')" class="mt-2" />
                         </div>
 
@@ -166,7 +166,7 @@
                                 {{ __('Cancelar') }}
                             </a>
 
-                            <x-primary-button class="ml-4">
+                            <x-primary-button class="ml-4" :disabled="$registrationsClosed && !$isOrganizer">
                                 {{ __('Actualizar Jugador') }}
                             </x-primary-button>
                         </div>

@@ -30,6 +30,21 @@
                             Editar Campeonato
                         </a>
                         @endcan
+                        @can('update', $campeonato)
+                        <form id="toggle-registrations-form" action="{{ route('campeonatos.toggle-registrations', $campeonato) }}" method="POST" class="flex items-center" x-data>
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="flex items-center {{ $campeonato->registrations_open ? 'bg-red-500 hover:bg-red-400' : 'bg-green-500 hover:bg-green-400' }} text-white px-3 py-1 rounded-md transition-colors duration-300">
+                                @if($campeonato->registrations_open)
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                                Cerrar Registros
+                                @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                Abrir Registros
+                                @endif
+                            </button>
+                        </form>
+                        @endcan
                     </div>
                 </div>
                 

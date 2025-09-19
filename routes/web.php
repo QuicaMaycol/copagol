@@ -30,7 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/campeonatos/{campeonato}/delegates', [CampeonatoController::class, 'storeDelegate'])->name('campeonatos.delegates.store');
     Route::delete('/campeonatos/{campeonato}/delegates/{user}', [CampeonatoController::class, 'destroyDelegate'])->name('campeonatos.delegates.destroy');
     Route::post('/campeonatos/{campeonato}/generate-calendar', [CampeonatoController::class, 'generateCalendar'])->name('campeonatos.generate-calendar');
-    Route::post('/campeonatos/{campeonato}/toggle-registrations', [CampeonatoController::class, 'toggleRegistrations'])->name('campeonatos.toggle-registrations');
+    Route::patch('/campeonatos/{campeonato}/toggle-registrations', [CampeonatoController::class, 'toggleRegistrations'])->name('campeonatos.toggle-registrations');
     Route::get('/campeonatos/{campeonato}/progress', [CampeonatoController::class, 'getProgressData'])->name('campeonatos.progress');
     Route::delete('/campeonatos/{campeonato}/reset-calendar', [CampeonatoController::class, 'resetCalendar'])->name('campeonatos.reset-calendar');
 
