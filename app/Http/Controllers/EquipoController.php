@@ -173,18 +173,12 @@ class EquipoController extends Controller
         $validatedData = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'imagen_equipo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
-            'cancha_direccion' => 'nullable|string|max:255',
+            'imagen_url' => 'nullable|url|max:255', // Changed from imagen_equipo (file) to imagen_url (string)
         ]);
 
-        // Handle image upload
-        if ($request->hasFile('imagen_equipo')) {
-            // Delete old image if exists
-            if ($equipo->imagen_url) {
-                Storage::disk('public')->delete($equipo->imagen_url);
-            }
-            $validatedData['imagen_url'] = $request->file('imagen_equipo')->store('equipos', 'public');
-        }
+        // The form sends imagen_url as a string, so no file upload handling needed here for that field.
+        // If there was a separate file upload for 'imagen_equipo', it would be handled differently.
+        // For now, we assume imagen_url is directly provided as a URL string.
 
         $equipo->update($validatedData);
 

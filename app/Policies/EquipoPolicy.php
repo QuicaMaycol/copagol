@@ -19,6 +19,11 @@ class EquipoPolicy
      */
     public function update(User $user, Equipo $equipo)
     {
+        // Allow if the user is an admin
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // Allow if the user is the owner of the championship (the admin of the tournament)
         if ($user->id === $equipo->campeonato->user_id) {
             return true;

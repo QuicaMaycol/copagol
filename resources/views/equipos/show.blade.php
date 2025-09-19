@@ -13,6 +13,12 @@
                     <input type="file" id="image_upload" name="imagen_equipo" class="hidden" onchange="document.getElementById('imageUploadForm').submit();">
                 </form>
                 <h1 class="text-white text-2xl md:text-3xl font-bold">{{ $equipo->nombre }}</h1>
+                {{-- Edit Team Button --}}
+                @can('update', $equipo) {{-- Assuming a policy for team update --}}
+                    <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'edit-team-modal')" class="ml-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors duration-200" title="Editar Equipo">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                @endcan
             </div>
             <div class="hidden md:block">
                 <span class="px-4 py-2 bg-white/20 rounded-full text-white font-medium">Temporada 2023/24</span>
@@ -406,4 +412,6 @@
             animateOnScroll();
         });
     </script>
+
+    <x-edit-team-form :equipo="$equipo" />
 </x-app-layout>
