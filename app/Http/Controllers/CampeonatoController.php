@@ -218,6 +218,22 @@ class CampeonatoController extends Controller
         }
         // --- Fin de la lógica para restingTeamsByJornada ---
 
+        $matchPairs = [];
+        $duplicateMatchIds = [];
+        foreach ($campeonato->partidos->sortBy('jornada') as $partido) {
+            // Sort team IDs to make the pair order-independent
+            $pair = collect([$partido->equipo_local_id, $partido->equipo_visitante_id])->sort()->values()->all();
+            $pairKey = implode('-', $pair);
+
+            if (isset($matchPairs[$pairKey])) {
+                // This is a duplicate
+                $duplicateMatchIds[] = $partido->id;
+            } else {
+                // First time seeing this pair
+                $matchPairs[$pairKey] = $partido->id;
+            }
+        }
+
         return view('campeonatos.show', compact(
             'campeonato', 
             'suspendedPlayers', 
@@ -233,7 +249,8 @@ class CampeonatoController extends Controller
             'fairPlay',
             'partidosJugados',
             'partidosProximos',
-            'restingTeamsByJornada' // Pasar la variable a la vista
+            'restingTeamsByJornada', // Pasar la variable a la vista
+            'duplicateMatchIds'
         ));
     }
 

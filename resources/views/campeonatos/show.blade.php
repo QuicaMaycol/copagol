@@ -291,7 +291,7 @@
                                     </div>
                                     <div class="space-y-4" x-show="open" x-collapse>
                                         @foreach($partidosEnJornada as $partido)
-                                        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 border-blue-500 dark:border-blue-700">
+                                        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 {{ in_array($partido->id, $duplicateMatchIds ?? []) ? 'border-red-500' : 'border-blue-500' }}">
                                             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                                                 <div class="w-full flex-grow flex flex-col sm:flex-row items-center sm:justify-between gap-2">
                                                     <!-- Local Team -->
@@ -321,6 +321,9 @@
                                                     @endcan
                                                 </div>
                                             </div>
+                                            @if(in_array($partido->id, $duplicateMatchIds ?? []))
+                                                <p class="text-red-500 text-xs mt-2 font-bold text-center">Aviso: Este enfrentamiento ya se ha programado en otra jornada.</p>
+                                            @endif
                                         </div>
                                         @endforeach
                                     </div>
