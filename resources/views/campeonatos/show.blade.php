@@ -9,32 +9,32 @@
                         Volver a Campeonatos
                     </a>
                     
-                    <div class="flex flex-wrap items-center justify-end space-x-2">
+                    <div class="w-full md:w-auto flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2">
                         @can('share', $campeonato)
-                        <a href="{{ route('campeonatos.public.share', $campeonato) }}" target="_blank" class="flex items-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-1 rounded-md transition-colors duration-300">
+                        <a href="{{ route('campeonatos.public.share', $campeonato) }}" target="_blank" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                             Compartir
                         </a>
                         @endcan
                         
                         @if($campeonato->reglamento_tipo)
-                        <button @click="$dispatch('open-reglamento-modal')" class="flex items-center bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-md transition-colors duration-300">
+                        <button @click="$dispatch('open-reglamento-modal')" class="flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-md transition-colors duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v2.5a2.5 2.5 0 0 1-2.5 2.5H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2H20"/><path d="M12 2a4 4 0 0 1 4 4v1.5a2.5 2.5 0 0 1 2.5 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H8.5A2.5 2.5 0 0 1 6 12.5V6a4 4 0 0 1 4-4z"/></svg>
                             Ver Reglamento
                         </button>
                         @endif
                         
                         @can('manage-campeonato', $campeonato)
-                        <a href="{{ route('campeonatos.edit', $campeonato) }}" class="flex items-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-1 rounded-md transition-colors duration-300">
+                        <a href="{{ route('campeonatos.edit', $campeonato) }}" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             Editar Campeonato
                         </a>
                         @endcan
                         @can('update', $campeonato)
-                        <form id="toggle-registrations-form" action="{{ route('campeonatos.toggle-registrations', $campeonato) }}" method="POST" class="flex items-center" x-data>
+                        <form id="toggle-registrations-form" action="{{ route('campeonatos.toggle-registrations', $campeonato) }}" method="POST" class="w-full" x-data>
                             @csrf
                             @method('PATCH')
-                            <button type="submit" class="flex items-center {{ $campeonato->registrations_open ? 'bg-red-500 hover:bg-red-400' : 'bg-green-500 hover:bg-green-400' }} text-white px-3 py-1 rounded-md transition-colors duration-300">
+                            <button type="submit" class="w-full flex items-center justify-center {{ $campeonato->registrations_open ? 'bg-red-500 hover:bg-red-400' : 'bg-green-500 hover:bg-green-400' }} text-white px-3 py-2 rounded-md transition-colors duration-300">
                                 @if($campeonato->registrations_open)
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
                                 Cerrar Registros
@@ -261,12 +261,9 @@
 
                     <div class="py-6">
                         <div x-show="subTab === 'proximos'">
-                            @if(isset($campeonato->partidos) && $campeonato->partidos->count() > 0)
+                            @if(isset($partidosProximos) && $partidosProximos->count() > 0)
                             <div class="space-y-8">
-                                @php
-                                    $partidosPorJornada = $campeonato->partidos->groupBy('jornada');
-                                @endphp
-                                @foreach($partidosPorJornada as $jornada => $partidosEnJornada)
+                                @foreach($partidosProximos as $jornada => $partidosEnJornada)
                                     @php
                                         $teamsInJornada = [];
                                         $duplicateTeamsInJornada = [];
@@ -295,25 +292,35 @@
                                     </div>
                                     <div class="space-y-4" x-show="open" x-collapse>
                                         @foreach($partidosEnJornada as $partido)
-                                        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 border-blue-500 dark:border-blue-700">
-                                            <div class="flex items-center space-x-3">
-                                                <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoLocal->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Local">
-                                                <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoLocal->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoLocal->nombre }}</span>
-                                            </div>
-                                            <span class="text-gray-500 text-sm font-bold">vs</span>
-                                            <div class="flex items-center space-x-3">
-                                                <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoVisitante->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoVisitante->nombre }}</span>
-                                                <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoVisitante->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Visitante">
-                                            </div>
-                                            <div class="flex items-center space-x-2">
-                                                <button @click="getSancionados({{ $partido->id }})" class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-full transition-colors duration-300" title="Ver Sancionados">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                                                </button>
-                                                @can('manage-campeonato', $campeonato)
-                                                <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300" title="Editar Partido">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                </a>
-                                                @endcan
+                                        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 border-blue-500 dark:border-blue-700">
+                                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                <div class="w-full flex-grow flex flex-col sm:flex-row items-center sm:justify-between gap-2">
+                                                    <!-- Local Team -->
+                                                    <div class="flex items-center space-x-3">
+                                                        <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoLocal->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Local">
+                                                        <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoLocal->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoLocal->nombre }}</span>
+                                                    </div>
+                                                    
+                                                    <div class="font-bold text-gray-500">vs</div>
+                                        
+                                                    <!-- Visitor Team -->
+                                                    <div class="flex items-center space-x-3">
+                                                        <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoVisitante->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoVisitante->nombre }}</span>
+                                                        <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoVisitante->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Visitante">
+                                                    </div>
+                                                </div>
+                                        
+                                                <!-- Actions -->
+                                                <div class="flex items-center space-x-2 flex-shrink-0">
+                                                    <button @click="getSancionados({{ $partido->id }})" class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-full transition-colors duration-300" title="Ver Sancionados">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                                    </button>
+                                                    @can('manage-campeonato', $campeonato)
+                                                    <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300" title="Editar Partido">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                    </a>
+                                                    @endcan
+                                                </div>
                                             </div>
                                         </div>
                                         @endforeach
@@ -334,20 +341,25 @@
                             @if(isset($partidosJugados) && count($partidosJugados) > 0)
                             <div class="space-y-4">
                                 @foreach($partidosJugados as $jornada => $partidosEnJornada)
-                                <div class="mb-8">
-                                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 border-b pb-2">Jornada {{ $jornada }}</h3>
-                                    @if(isset($restingTeamsByJornada[$jornada]))
-                                        <p class="text-md text-gray-600 dark:text-gray-400 mb-4">Equipo que descansa: <span class="font-semibold">{{ $restingTeamsByJornada[$jornada] }}</span></p>
-                                    @endif
-                                    <div class="space-y-4">
+                                <div class="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md" x-data="{ open: true }">
+                                    <div class="flex justify-between items-center mb-4 border-b pb-2 cursor-pointer" @click="open = !open">
+                                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Jornada {{ $jornada }}</h3>
+                                        @if(isset($restingTeamsByJornada[$jornada]))
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Equipo que descansa: <span class="font-semibold">{{ $restingTeamsByJornada[$jornada] }}</span></p>
+                                        @endif
+                                        <svg :class="{'rotate-180': open}" class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                    <div class="space-y-4" x-show="open" x-collapse>
                                         @foreach($partidosEnJornada as $partido)
                                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border-l-4 {{ $partido->goles_local > $partido->goles_visitante ? 'border-green-500' : ($partido->goles_local < $partido->goles_visitante ? 'border-red-500' : 'border-yellow-500') }}">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center space-x-3">
+                                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                <!-- Local Team -->
+                                                <div class="flex items-center space-x-3 w-full sm:w-auto justify-start flex-1">
                                                     <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoLocal->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
                                                     <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $partido->equipoLocal->nombre }}</span>
                                                 </div>
-                                                <div class="text-center">
+                                                <!-- Score -->
+                                                <div class="text-center flex-shrink-0">
                                                     <span class="text-xl font-bold">{{ $partido->goles_local }} - {{ $partido->goles_visitante }}</span>
                                                     <p class="text-xs text-gray-400">Finalizado</p>
                                                     @can('manage-campeonato', $campeonato)
@@ -358,7 +370,8 @@
                                                     </div>
                                                     @endcan
                                                 </div>
-                                                <div class="flex items-center space-x-3">
+                                                <!-- Visitor Team -->
+                                                <div class="flex items-center space-x-3 w-full sm:w-auto justify-end flex-1">
                                                     <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $partido->equipoVisitante->nombre }}</span>
                                                     <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoVisitante->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
                                                 </div>
