@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Support\Facades\Storage;
 
 class Campeonato extends Model implements Auditable
 {
@@ -20,7 +21,7 @@ class Campeonato extends Model implements Auditable
     protected $fillable = [
         'user_id',
         'nombre_torneo',
-        'imagen_url',
+        'imagen_path',
         'equipos_max',
         'jugadores_por_equipo_max',
         'tipo_futbol',
@@ -94,7 +95,7 @@ class Campeonato extends Model implements Auditable
             $standings[$equipo->id] = [
                 'id' => $equipo->id,
                 'nombre' => $equipo->nombre,
-                'imagen_url' => $equipo->imagen_url, // Add imagen_url here
+                'imagen_url' => $equipo->imagen_url, // Use the accessor
                 'PJ' => 0, // Partidos Jugados
                 'PG' => 0, // Partidos Ganados
                 'PE' => 0, // Partidos Empatados
@@ -209,5 +210,16 @@ class Campeonato extends Model implements Auditable
             return $this->attributes['cancha_unica_direccion'] ?? 'Ubicación única';
         }
         return 'Cancha propia de cada equipo';
+    }
+
+    /**
+     * Get the full URL for the championship's image.
+     */
+    public function getImagenUrlAttribute()
+    {
+        if ($this->imagen_path) {
+            return Storage::url($this->imagen_path);
+        }
+        return null;
     }
 }

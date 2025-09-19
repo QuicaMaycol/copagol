@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Support\Facades\Storage;
 
 class Jugador extends Model implements Auditable
 {
@@ -19,7 +20,7 @@ class Jugador extends Model implements Auditable
         'dni',
         'numero_camiseta',
         'posicion',
-        'imagen_url',
+        'imagen_path',
         'equipo_id',
         'goles',
         'tarjetas_amarillas',
@@ -53,5 +54,16 @@ class Jugador extends Model implements Auditable
     public function estadisticas()
     {
         return $this->hasMany(PartidoJugadorEstadistica::class);
+    }
+
+    /**
+     * Get the full URL for the player's image.
+     */
+    public function getImagenUrlAttribute()
+    {
+        if ($this->imagen_path) {
+            return Storage::url($this->imagen_path);
+        }
+        return null;
     }
 }

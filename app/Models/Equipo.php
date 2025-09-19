@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Support\Facades\Storage;
 
 class Equipo extends Model implements Auditable
 {
@@ -19,7 +20,7 @@ class Equipo extends Model implements Auditable
     protected $fillable = [
         'nombre',
         'descripcion',
-        'imagen_url',
+        'imagen_path',
         'cancha_direccion',
         'campeonato_id',
         'user_id',
@@ -54,5 +55,16 @@ class Equipo extends Model implements Auditable
     public function partidosVisitante()
     {
         return $this->hasMany(Partido::class, 'equipo_visitante_id');
+    }
+
+    /**
+     * Get the full URL for the team's image.
+     */
+    public function getImagenUrlAttribute()
+    {
+        if ($this->imagen_path) {
+            return Storage::url($this->imagen_path);
+        }
+        return null;
     }
 }

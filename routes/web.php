@@ -35,6 +35,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/campeonatos/{campeonato}/progress', [CampeonatoController::class, 'getProgressData'])->name('campeonatos.progress');
     Route::delete('/campeonatos/{campeonato}/reset-calendar', [CampeonatoController::class, 'resetCalendar'])->name('campeonatos.reset-calendar');
 
+    Route::post('/campeonatos/{campeonato}/update-image', [CampeonatoController::class, 'updateImage'])->name('campeonatos.updateImage');
+
     Route::post('/partidos/{partido}/store-result', [CampeonatoController::class, 'storeResult'])->name('partidos.store-result');
     Route::get('/partidos/{partido}/edit', [CampeonatoController::class, 'editMatch'])->name('partidos.edit');
     Route::put('/partidos/{partido}', [CampeonatoController::class, 'updateMatch'])->name('partidos.update');

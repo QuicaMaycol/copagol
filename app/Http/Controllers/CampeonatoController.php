@@ -107,7 +107,7 @@ class CampeonatoController extends Controller
     {
         $validatedData = $request->validate([
             'nombre_torneo' => 'required|string|max:255',
-            'imagen_url' => 'nullable|url',
+            'imagen_path' => 'nullable|url',
             'equipos_max' => 'required|integer|min:2',
             'jugadores_por_equipo_max' => 'required|integer|min:1',
             'tipo_futbol' => 'required|in:5,7,11',
@@ -269,10 +269,10 @@ class CampeonatoController extends Controller
         // Handle image upload
         if ($request->hasFile('imagen_campeonato')) {
             // Delete old image if exists
-            if ($campeonato->imagen_url) {
-                Storage::disk('public')->delete($campeonato->imagen_url);
+            if ($campeonato->imagen_path) {
+                Storage::disk('public')->delete($campeonato->imagen_path);
             }
-            $validatedData['imagen_url'] = $request->file('imagen_campeonato')->store('campeonatos', 'public');
+            $validatedData['imagen_path'] = $request->file('imagen_campeonato')->store('campeonatos', 'public');
         }
 
         // Handle PDF upload
@@ -303,6 +303,29 @@ class CampeonatoController extends Controller
         $campeonato->update($validatedData);
 
         return Redirect::route('campeonatos.index')->with('success', 'Campeonato actualizado con éxito.');
+    }
+
+    public function updateImage(Request $request, Campeonato $campeonato)
+    {
+        $this->authorize('manage-campeonato', $campeonato);
+
+        $request->validate([
+            'imagen_campeonato' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
+        ]);
+
+        if ($request->hasFile('imagen_campeonato')) {
+            // Delete old image if exists
+            if ($campeonato->imagen_path) {
+                Storage::disk('public')->delete($campeonato->imagen_path);
+            }
+            
+            $path = $request->file('imagen_campeonato')->store('campeonatos', 'public');
+            
+            $campeonato->imagen_path = $path;
+            $campeonato->save();
+        }
+
+        return Redirect::route('campeonatos.show', $campeonato)->with('success', 'Imagen del campeonato actualizada con éxito.');
     }
 
     /**
@@ -586,7 +609,7 @@ class CampeonatoController extends Controller
 
                     // Save match-specific player statistics
                     \App\Models\PartidoJugadorEstadistica::updateOrCreate(
-                        ['partido_id' => $partido->id, 'jugador_id' => $jugador->id],
+                        ['partido_id' => $partido->id, 'jugador_id' => $jugadorId],
                         [
                             'goles' => ($stats['goles'] ?? 0),
                             'asistencias' => ($stats['asistencias'] ?? 0),

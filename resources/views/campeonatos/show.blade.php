@@ -49,9 +49,8 @@
                 </div>
                 
                 <div class="flex items-center space-x-4 mb-4">
-                    <form id="imageUploadForm" action="{{ route('campeonatos.update', $campeonato) }}" method="POST" enctype="multipart/form-data">
+                    <form id="imageUploadForm" action="{{ route('campeonatos.updateImage', $campeonato) }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        @method('PUT')
                         <label for="image_upload" class="cursor-pointer">
                             <img src="{{ $campeonato->imagen_url ?: 'https://via.placeholder.com/96' }}" alt="Logo del Campeonato" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg hover:opacity-75 transition-opacity duration-300">
                         </label>
