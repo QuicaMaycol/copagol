@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('campeonatos', CampeonatoController::class);
     Route::get('/campeonatos/{campeonato}/delegates/create', [CampeonatoController::class, 'createDelegateForm'])->name('campeonatos.delegates.create');
     Route::post('/campeonatos/{campeonato}/delegates', [CampeonatoController::class, 'storeDelegate'])->name('campeonatos.delegates.store');
+    Route::post('/campeonatos/{campeonato}/delegates-and-teams', [CampeonatoController::class, 'storeDelegateAndTeam'])->name('campeonatos.delegates-and-teams.store');
     Route::delete('/campeonatos/{campeonato}/delegates/{user}', [CampeonatoController::class, 'destroyDelegate'])->name('campeonatos.delegates.destroy');
     Route::post('/campeonatos/{campeonato}/generate-calendar', [CampeonatoController::class, 'generateCalendar'])->name('campeonatos.generate-calendar');
     Route::patch('/campeonatos/{campeonato}/toggle-registrations', [CampeonatoController::class, 'toggleRegistrations'])->name('campeonatos.toggle-registrations');

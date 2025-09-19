@@ -515,10 +515,10 @@
                     <div class="flex justify-between items-center mb-4 cursor-pointer" @click="openDelegates = !openDelegates">
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Delegados</h2>
                         <div class="flex items-center space-x-2">
-                            <a href="{{ route('campeonatos.delegates.create', $campeonato) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center transition-colors duration-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Añadir Delegado
-                            </a>
+                                                    <button @click.stop="$dispatch('open-add-delegate-team-modal')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Agregar Equipo
+                        </button>
                             <svg :class="{'rotate-180': openDelegates}" class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
                     </div>
@@ -683,4 +683,5 @@
 
         </main>
     </div>
+    <x-add-delegate-and-team-modal :campeonato="$campeonato" />
 </x-app-layout>

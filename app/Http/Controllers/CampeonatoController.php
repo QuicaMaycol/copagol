@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Campeonato;
 use App\Models\Partido;
+use App\Models\Equipo; // Add this line
 use App\Models\SystemLog;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -357,6 +358,53 @@ class CampeonatoController extends Controller
         $campeonato->delegates()->attach($delegate->id);
 
         return Redirect::to(route('campeonatos.show', $campeonato) . '#delegates-section')->with('success', 'Delegado añadido con éxito.');
+    }
+
+    /**
+     * Store a new delegate and their team for the championship.
+     */
+    public function storeDelegateAndTeam(Request $request, Campeonato $campeonato)
+    {
+        $this->authorize('manage-campeonato', $campeonato);
+
+        // Check if the maximum number of teams has been reached
+        $campeonato->loadCount('equipos');
+        if ($campeonato->equipos_count >= $campeonato->equipos_max) {
+            return Redirect::to(route('campeonatos.show', $campeonato) . '#delegates-section')
+                         ->with('error', 'El campeonato ha alcanzado el número máximo de equipos permitidos (' . $campeonato->equipos_max . ').');
+        }
+
+        $validatedData = $request->validate([
+            'delegate_name' => ['required', 'string', 'max:255'],
+            'delegate_email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
+            'delegate_dni' => ['required', 'string', 'max:20', Rule::unique('users', 'dni')],
+            'team_name' => ['required', 'string', 'max:255'],
+            'team_description' => ['nullable', 'string'],
+        ]);
+
+        // Create the delegate user
+        $delegate = User::create([
+            'name' => $validatedData['delegate_name'],
+            'email' => $validatedData['delegate_email'],
+            'dni' => $validatedData['delegate_dni'],
+            'password' => Hash::make($validatedData['delegate_dni']), // Set initial password to DNI
+            'role' => 'delegado',
+        ]);
+
+        // Attach the delegate to the championship
+        $campeonato->delegates()->attach($delegate->id);
+
+        // Create the team
+        $equipo = new Equipo([
+            'nombre' => $validatedData['team_name'],
+            'descripcion' => $validatedData['team_description'],
+            'campeonato_id' => $campeonato->id,
+            'user_id' => $delegate->id, // Associate team with the new delegate
+        ]);
+        $equipo->save();
+
+        return Redirect::to(route('campeonatos.show', $campeonato) . '#delegates-section')
+                     ->with('success', 'Delegado y equipo creados y asignados con éxito.');
     }
 
     /**
