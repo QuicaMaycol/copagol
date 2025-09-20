@@ -98,14 +98,44 @@
                                         <select id="posicion" name="posicion" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                             @php
                                                 $positions = [
-                                                    'AR' => 'Arquero', 'DF' => 'Defensa', 'MC' => 'Mediocampista', 'DL' => 'Delantero'
+                                                    'Posiciones Únicas' => [
+                                                        'AR' => '🟢 AR - Arquero',
+                                                        'DF' => '🔵 DF - Defensa',
+                                                        'MC' => '🔵 MC - Marcador Central',
+                                                        'LI' => '🔵 LI - Lateral Izquierdo',
+                                                        'LD' => '🔵 LD - Lateral Derecho',
+                                                        'MP' => '🟡 MP - Medio Campo',
+                                                        'MCD' => '🟡 MCD - Medio Campo Defensivo',
+                                                        'MCO' => '🟡 MCO - Medio Campo Ofensivo',
+                                                        'DL' => '🔴 DL - Delantero',
+                                                        'EXI' => '🔴 EXI - Extremo Izquierdo',
+                                                        'EXD' => '🔴 EXD - Extremo Derecho',
+                                                    ],
+                                                    'Combinaciones (2 Posiciones)' => [
+                                                        'DF/MC' => '⚪️ DF/MC - Defensa o Marcador Central',
+                                                        'LI/LD' => '⚪️ LI/LD - Lateral por ambas bandas',
+                                                        'MP/MCD' => '⚪️ MP/MCD - Medio Campo o Contención',
+                                                        'MP/MCO' => '⚪️ MP/MCO - Medio Campo o Creación',
+                                                        'DL/EX' => '⚪️ DL/EX - Delantero o Extremo',
+                                                        'DF/MP' => '⚪️ DF/MP - Defensa o Medio Campo',
+                                                    ],
+                                                    'Combinaciones (3 Posiciones)' => [
+                                                        'DF/MC/LI' => '⚪️ DF/MC/LI - Defensa, Central o Lateral Izquierdo',
+                                                        'MP/MCD/MCO' => '⚪️ MP/MCD/MCO - Cualquier rol en Medio Campo',
+                                                        'DL/EXI/EXD' => '⚪️ DL/EXI/EXD - Cualquier rol en Delantera',
+                                                        'DF/DL/MP' => '⚪️ DF/DL/MP - Jugador Polivalente (Defensa, Delantero, Medio)',
+                                                    ]
                                                 ];
                                             @endphp
                                             <option value="">Seleccione una posición</option>
-                                            @foreach ($positions as $value => $label)
-                                                <option value="{{ $value }}" {{ old('posicion', $jugador->posicion) == $value ? 'selected' : '' }}>
-                                                    {{ $label }}
-                                                </option>
+                                            @foreach ($positions as $group => $options)
+                                                <optgroup label="{{ $group }}">
+                                                    @foreach ($options as $value => $label)
+                                                        <option value="{{ $value }}" {{ old('posicion', $jugador->posicion) == $value ? 'selected' : '' }}>
+                                                            {{ $label }}
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
                                             @endforeach
                                         </select>
                                         <x-input-error :messages="$errors->get('posicion')" class="mt-2" />
