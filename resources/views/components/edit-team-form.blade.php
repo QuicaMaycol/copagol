@@ -8,7 +8,7 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Actualiza el nombre, descripción y URL del escudo de tu equipo.') }}
+            {{ __('Actualiza el nombre y descripción de tu equipo.') }}
         </p>
 
         <div class="mt-6">
@@ -23,12 +23,7 @@
             <x-input-error :messages="$errors->teamUpdating->get('descripcion')" class="mt-2" />
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="imagen_url" :value="__('URL del Escudo del Equipo')" />
-            <x-text-input id="imagen_url" name="imagen_url" type="url" class="mt-1 block w-full" :value="old('imagen_url', $equipo->imagen_url)" autocomplete="imagen_url" />
-            <x-input-error :messages="$errors->teamUpdating->get('imagen_url')" class="mt-2" />
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Pega la URL de una imagen de Google Drive, Dropbox, o cualquier servicio de alojamiento de imágenes.</p>
-        </div>
+        {{-- Removed imagen_url field --}}
 
         <div class="mt-6 flex justify-end">
             <x-secondary-button x-on:click="$dispatch('close')">

@@ -3,9 +3,8 @@
     <header class="bg-copa-blue-900 py-6 px-4 sm:px-6 lg:px-8">
         <div class="container mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-4">
-                <form id="imageUploadForm" action="{{ route('equipos.update', $equipo) }}" method="POST" enctype="multipart/form-data">
+                <form id="imageUploadForm" action="{{ route('equipos.updateImage', $equipo) }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    @method('PUT')
                     <label for="image_upload" class="cursor-pointer bg-white p-1 rounded-full">
                         <img src="{{ $equipo->imagen_url ?: 'http://static.photos/sport/60x60/' . ($equipo->id % 10) }}" alt="Escudo del equipo" 
                              class="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white hover:opacity-75 transition-opacity duration-300">

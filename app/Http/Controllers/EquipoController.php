@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class EquipoController extends Controller
 {
@@ -171,18 +172,54 @@ class EquipoController extends Controller
         $this->authorize('update', $equipo); // Assuming an 'update' policy for Equipo
 
         $validatedData = $request->validate([
-            'nombre' => 'required|string|max:255',
+            'nombre' => 'sometimes|required|string|max:255',
             'descripcion' => 'nullable|string',
-            'imagen_url' => 'nullable|url|max:255', // Changed from imagen_equipo (file) to imagen_url (string)
+            'imagen_equipo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        // The form sends imagen_url as a string, so no file upload handling needed here for that field.
-        // If there was a separate file upload for 'imagen_equipo', it would be handled differently.
-        // For now, we assume imagen_url is directly provided as a URL string.
+        // Handle image upload
+        if ($request->hasFile('imagen_equipo')) {
+            // Delete old image if exists
+            if ($equipo->imagen_path) {
+                Storage::disk('public')->delete($equipo->imagen_path);
+            }
+            $equipo->imagen_path = $request->file('imagen_equipo')->store('equipos', 'public');
+        }
 
-        $equipo->update($validatedData);
+        // Update other fields if they are present in the request
+        if ($request->has('nombre')) {
+            $equipo->nombre = $validatedData['nombre'];
+        }
+        if ($request->has('descripcion')) {
+            $equipo->descripcion = $validatedData['descripcion'];
+        }
+        
+        $equipo->save();
 
         return Redirect::route('equipos.show', $equipo)->with('success', 'Equipo actualizado con éxito.');
+    }
+
+    public function updateImage(Request $request, Equipo $equipo)
+    {
+        $this->authorize('update', $equipo);
+
+        $request->validate([
+            'imagen_equipo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
+        ]);
+
+        if ($request->hasFile('imagen_equipo')) {
+            // Delete old image if exists
+            if ($equipo->imagen_path) {
+                Storage::disk('public')->delete($equipo->imagen_path);
+            }
+            
+            $path = $request->file('imagen_equipo')->store('equipos', 'public');
+            
+            $equipo->imagen_path = $path;
+            $equipo->save();
+        }
+
+        return Redirect::route('equipos.show', $equipo)->with('success', 'Imagen del equipo actualizada con éxito.');
     }
 
     /**

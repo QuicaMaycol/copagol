@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/partidos/{partido}/finalizar-sanciones', [PartidoController::class, 'actualizarSancionesPostPartido'])->name('partidos.finalizar-sanciones');
 
     Route::resource('equipos', EquipoController::class)->except(['index']); // Assuming you don't need a general index of all teams
+    Route::post('/equipos/{equipo}/update-image', [EquipoController::class, 'updateImage'])->name('equipos.updateImage');
 
     Route::get('/equipos/{equipo}/jugadores/create', [JugadorController::class, 'create'])->name('jugadores.create');
     Route::post('/equipos/{equipo}/jugadores', [JugadorController::class, 'store'])->name('jugadores.store');
