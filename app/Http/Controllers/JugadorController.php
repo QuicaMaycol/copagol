@@ -108,10 +108,20 @@ class JugadorController extends Controller
         $rules = array_merge($rules, [
             'numero_camiseta' => 'nullable|integer|min:1',
             'posicion' => 'nullable|string|max:255',
-            'imagen_url' => 'nullable|url',
+            'imagen_jugador' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Changed from imagen_url to imagen_jugador
         ]);
 
         $updateData = $request->validate($rules);
+
+        // Handle image upload
+        if ($request->hasFile('imagen_jugador')) {
+            // Delete old image if it exists
+            if ($jugador->imagen_path) {
+                Storage::disk('public')->delete($jugador->imagen_path);
+            }
+            // Store the new image and update the path
+            $jugador->imagen_path = $request->file('imagen_jugador')->store('jugadores', 'public');
+        }
 
         // Capture original card values before update for suspension logic
         $originalTarjetasRojas = $jugador->tarjetas_rojas;
@@ -135,7 +145,11 @@ class JugadorController extends Controller
             $updateData['suspendido'] = false;
         }
 
+        // Unset the image from the main update array as we've handled it manually
+        unset($updateData['imagen_jugador']);
+
         $jugador->update($updateData);
+        $jugador->save(); // Save the changes including the potential new image path
 
         // Suspension Logic (only if stats were potentially updated by an admin/organizer)
         $suspensionMessage = '';
