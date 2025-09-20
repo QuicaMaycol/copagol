@@ -94,4 +94,17 @@ class PartidoController extends Controller
             'conAmarilla' => $conAmarilla->values(),
         ]);
     }
+
+    /**
+     * Display the public details of a specific match.
+     *
+     * @param  \App\Models\Partido  $partido
+     * @return \Illuminate\View\View
+     */
+    public function publicShow(Partido $partido)
+    {
+        $partido->load('equipoLocal.jugadores', 'equipoVisitante.jugadores', 'campeonato');
+
+        return view('partidos.public_show', compact('partido'));
+    }
 }

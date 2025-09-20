@@ -21,6 +21,7 @@ Route::get('/', function () {
 });
 
 Route::get('/campeonatos/{campeonato}/compartir', [CampeonatoController::class, 'publicShare'])->name('campeonatos.public.share');
+Route::get('/partidos/{partido}/public', [PartidoController::class, 'publicShow'])->name('partidos.public_show');
 
 Route::get('/dashboard', function () {
     return redirect()->route('campeonatos.index');

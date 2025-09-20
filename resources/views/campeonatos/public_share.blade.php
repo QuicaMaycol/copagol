@@ -1,116 +1,142 @@
 <x-guest-layout>
-    <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ $campeonato->nombre_campeonato }}</h1>
-        <p class="text-gray-600 mb-6">Organizado por {{ $campeonato->organizador->name }}</p>
+    @php
+        // Particionar partidos en finalizados y próximos
+        [$partidosFinalizados, $partidosProximos] = $campeonato->partidos->partition(function ($partido) {
+            return $partido->estado === 'finalizado';
+        });
 
-        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Tabla de Posiciones</h2>
-        @if(!empty($tablaPosiciones))
-            <div class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg shadow overflow-hidden">
-                    <thead>
-                        <tr class="bg-blue-500 text-white">
-                            <th class="px-4 py-2 text-left">Pos</th>
-                            <th class="px-4 py-2 text-left">Equipo</th>
-                            <th class="px-4 py-2 text-center">Pts</th>
-                            <th class="px-4 py-2 text-center">PJ</th>
-                            <th class="px-4 py-2 text-center">PG</th>
-                            <th class="px-4 py-2 text-center">PE</th>
-                            <th class="px-4 py-2 text-center">PP</th>
-                            <th class="px-4 py-2 text-center">GF</th>
-                            <th class="px-4 py-2 text-center">GC</th>
-                            <th class="px-4 py-2 text-center">DG</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($tablaPosiciones as $index => $team)
-                            <tr class="{{ $loop->even ? 'bg-gray-100' : 'bg-white' }}">
-                                <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                <td class="px-4 py-2">{{ $team['nombre'] }}</td>
-                                <td class="px-4 py-2 text-center font-bold">{{ $team['Pts'] }}</td>
-                                <td class="px-4 py-2 text-center">{{ $team['PJ'] }}</td>
-                                <td class="px-4 py-2 text-center">{{ $team['PG'] }}</td>
-                                <td class="px-4 py-2 text-center">{{ $team['PE'] }}</td>
-                                <td class="px-4 py-2 text-center">{{ $team['PP'] }}</td>
-                                <td class="px-4 py-2 text-center">{{ $team['GF'] }}</td>
-                                <td class="px-4 py-2 text-center">{{ $team['GC'] }}</td>
-                                <td class="px-4 py-2 text-center">{{ $team['DG'] }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        // Agrupar por jornada
+        $finalizadosPorJornada = $partidosFinalizados->sortBy('jornada')->groupBy('jornada');
+        $proximosPorJornada = $partidosProximos->sortBy('jornada')->groupBy('jornada');
+    @endphp
+
+    <div class="container mx-auto p-4 bg-gray-50 font-sans">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">{{ $campeonato->nombre_campeonato }}</h1>
+            <p class="text-md text-gray-600">Organizado por {{ $campeonato->organizador->name }}</p>
+        </div>
+
+        <!-- Pestañas para Próximos y Resultados -->
+        <div x-data="{ activeTab: 'proximos' }" class="w-full max-w-4xl mx-auto">
+            <div class="flex justify-center border-b-2 border-gray-200 mb-4">
+                <button @click="activeTab = 'proximos'" 
+                        :class="{'border-blue-500 text-blue-600': activeTab === 'proximos', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'proximos'}"
+                        class="py-2 px-4 font-semibold text-lg border-b-4 focus:outline-none transition-colors duration-300">
+                    Próximos
+                </button>
+                <button @click="activeTab = 'resultados'" 
+                        :class="{'border-blue-500 text-blue-600': activeTab === 'resultados', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'resultados'}"
+                        class="py-2 px-4 font-semibold text-lg border-b-4 focus:outline-none transition-colors duration-300">
+                    Resultados
+                </button>
             </div>
-        @else
-            <p class="text-gray-500 mb-6">La tabla de posiciones aún no está disponible.</p>
-        @endif
 
-        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Máximos Goleadores</h2>
-        @if(!empty($goleadores))
-            <div class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg shadow overflow-hidden">
-                    <thead>
-                        <tr class="bg-blue-500 text-white">
-                            <th class="px-4 py-2 text-left">Jugador</th>
-                            <th class="px-4 py-2 text-left">Equipo</th>
-                            <th class="px-4 py-2 text-center">Goles</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($goleadores as $goleador)
-                            <tr class="{{ $loop->even ? 'bg-gray-100' : 'bg-white' }}">
-                                <td class="px-4 py-2">{{ $goleador->nombre }} {{ $goleador->apellido }}</td>
-                                <td class="px-4 py-2">{{ $goleador->equipo->nombre }}</td>
-                                <td class="px-4 py-2 text-center font-bold">{{ $goleador->goles }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <!-- Contenido de Partidos Próximos -->
+            <div x-show="activeTab === 'proximos'" x-cloak>
+                <div x-data="{ openJornada: {{ $proximosPorJornada->keys()->first() ?? 'null' }} }">
+                    @forelse($proximosPorJornada as $jornada => $matches)
+                        @include('campeonatos.partials._jornada_accordion', ['jornada' => $jornada, 'matches' => $matches, 'campeonato' => $campeonato, 'isResultados' => false])
+                    @empty
+                        <p class="text-center text-gray-500 p-4">No hay próximos partidos programados.</p>
+                    @endforelse
+                </div>
             </div>
-        @else
-            <p class="text-gray-500 mb-6">Aún no hay goleadores registrados.</p>
-        @endif
 
-        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Partidos</h2>
-        @php
-            $matchesByJornada = $campeonato->partidos->sortBy('jornada')->groupBy('jornada');
-        @endphp
+            <!-- Contenido de Resultados -->
+            <div x-show="activeTab === 'resultados'" x-cloak>
+                <div x-data="{ openJornada: {{ $finalizadosPorJornada->keys()->first() ?? 'null' }} }">
+                    @forelse($finalizadosPorJornada as $jornada => $matches)
+                        @include('campeonatos.partials._jornada_accordion', ['jornada' => $jornada, 'matches' => $matches, 'campeonato' => $campeonato, 'isResultados' => true])
+                    @empty
+                        <p class="text-center text-gray-500 p-4">No hay resultados de partidos todavía.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
 
-        @forelse($matchesByJornada as $jornada => $matches)
-            <div class="mb-4 p-4 bg-white rounded-lg shadow">
-                <h3 class="text-xl font-bold text-gray-800 mb-3">Jornada {{ $jornada }}</h3>
-                @php
-                    $allTeamIds = $campeonato->equipos->pluck('id')->toArray();
-                    $playingTeamIds = $matches->pluck('equipo_local_id')->concat($matches->pluck('equipo_visitante_id'))->unique()->toArray();
-                    $restingTeamIds = array_diff($allTeamIds, $playingTeamIds);
-                    $restingTeamName = null;
-                    if (!empty($restingTeamIds)) {
-                        $restingTeam = \App\Models\Equipo::find(reset($restingTeamIds));
-                        if ($restingTeam) {
-                            $restingTeamName = $restingTeam->nombre;
-                        }
-                    }
-                @endphp
-                @if($restingTeamName)
-                    <div class="bg-blue-100 text-blue-800 p-3 rounded-lg mb-4 text-center font-semibold">
-                        Equipo que descansa: {{ $restingTeamName }}
-                    </div>
-                @endif
-                @foreach($matches->sortBy('fecha_partido') as $match)
-                    <div class="flex justify-between items-center p-3 mb-2 bg-gray-50 rounded-lg">
-                        <div class="flex-1 text-right font-semibold">{{ $match->equipoLocal->nombre }}</div>
-                        <div class="mx-4 text-lg font-bold">
-                            @if($match->estado === 'finalizado')
-                                {{ $match->goles_local }} - {{ $match->goles_visitante }}
-                            @else
-                                vs
-                            @endif
+        <!-- Tablas de Posiciones y Goleadores -->
+        <div class="w-full max-w-4xl mx-auto mt-10">
+            <!-- Tabla de Posiciones -->
+            <div x-data="{ open: true }" class="bg-white rounded-lg shadow-md mb-6">
+                <div @click="open = !open" class="p-4 bg-gray-800 text-white font-bold text-lg rounded-t-lg cursor-pointer flex justify-between items-center">
+                    <h2>Tabla de Posiciones</h2>
+                    <span x-text="open ? '-' : '+'" class="text-xl"></span>
+                </div>
+                <div x-show="open" x-transition class="p-0">
+                    @if(!empty($tablaPosiciones))
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                        <th class="py-3 px-4 text-left">Pos</th>
+                                        <th class="py-3 px-4 text-left">Equipo</th>
+                                        <th class="py-3 px-4 text-center">Pts</th>
+                                        <th class="py-3 px-4 text-center">PJ</th>
+                                        <th class="py-3 px-4 text-center">G</th>
+                                        <th class="py-3 px-4 text-center">E</th>
+                                        <th class="py-3 px-4 text-center">P</th>
+                                        <th class="py-3 px-4 text-center">GF</th>
+                                        <th class="py-3 px-4 text-center">GC</th>
+                                        <th class="py-3 px-4 text-center">DG</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-700 text-sm font-light">
+                                    @foreach($tablaPosiciones as $index => $team)
+                                        <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                            <td class="py-3 px-4 text-left font-semibold">{{ $index + 1 }}</td>
+                                            <td class="py-3 px-4 text-left">{{ $team['nombre'] }}</td>
+                                            <td class="py-3 px-4 text-center font-bold">{{ $team['Pts'] }}</td>
+                                            <td class="py-3 px-4 text-center">{{ $team['PJ'] }}</td>
+                                            <td class="py-3 px-4 text-center text-green-500">{{ $team['PG'] }}</td>
+                                            <td class="py-3 px-4 text-center text-yellow-500">{{ $team['PE'] }}</td>
+                                            <td class="py-3 px-4 text-center text-red-500">{{ $team['PP'] }}</td>
+                                            <td class="py-3 px-4 text-center">{{ $team['GF'] }}</td>
+                                            <td class="py-3 px-4 text-center">{{ $team['GC'] }}</td>
+                                            <td class="py-3 px-4 text-center">{{ $team['DG'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="flex-1 text-left font-semibold">{{ $match->equipoVisitante->nombre }}</div>
-                    </div>
-                    <p class="text-center text-sm text-gray-500 mb-2">{{ \Carbon\Carbon::parse($match->fecha_partido)->format('d M Y H:i') }} - {{ $match->ubicacion_partido ?? 'Sin Ubicación' }}</p>
-                @endforeach
+                    @else
+                        <p class="text-gray-500 p-4">La tabla de posiciones aún no está disponible.</p>
+                    @endif
+                </div>
             </div>
-        @empty
-            <p class="text-gray-500">No hay partidos programados para este campeonato.</p>
-        @endforelse
+
+            <!-- Máximos Goleadores -->
+            <div x-data="{ open: true }" class="bg-white rounded-lg shadow-md">
+                <div @click="open = !open" class="p-4 bg-gray-800 text-white font-bold text-lg rounded-t-lg cursor-pointer flex justify-between items-center">
+                    <h2>Máximos Goleadores</h2>
+                    <span x-text="open ? '-' : '+'" class="text-xl"></span>
+                </div>
+                <div x-show="open" x-transition class="p-0">
+                    @if(!empty($goleadores))
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                        <th class="py-3 px-4 text-left">Jugador</th>
+                                        <th class="py-3 px-4 text-left">Equipo</th>
+                                        <th class="py-3 px-4 text-center">Goles</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-700 text-sm font-light">
+                                    @foreach($goleadores as $goleador)
+                                        <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                            <td class="py-3 px-4 text-left">{{ $goleador->nombre }} {{ $goleador->apellido }}</td>
+                                            <td class="py-3 px-4 text-left">{{ $goleador->equipo->nombre }}</td>
+                                            <td class="py-3 px-4 text-center font-bold">{{ $goleador->goles }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-gray-500 p-4">Aún no hay goleadores registrados.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 </x-guest-layout>
