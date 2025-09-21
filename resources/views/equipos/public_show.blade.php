@@ -43,8 +43,7 @@
                                 <tbody class="text-gray-700 text-sm font-light">
                                     @forelse($jugadores as $jugador)
                                         <tr class="border-b border-gray-200 hover:bg-gray-100">
-                                            <td class="py-3 px-4 text-left flex items-center">
-                                                <img src="{{ $jugador->imagen_url ?? 'https://via.placeholder.com/40' }}" class="w-10 h-10 rounded-full object-cover mr-4" alt="Foto de {{ $jugador->nombre }}">
+                                            <td class="py-3 px-4 text-left">
                                                 <span class="font-medium">{{ $jugador->nombre }} {{ $jugador->apellido }}</span>
                                             </td>
                                             <td class="py-3 px-4 text-center">{{ $jugador->edad }}</td>
