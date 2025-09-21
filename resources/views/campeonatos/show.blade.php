@@ -9,45 +9,87 @@
                         Volver a Campeonatos
                     </a>
                     
-                    <div class="w-full md:w-auto flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2">
-                        @can('share', $campeonato)
-                        <a href="{{ route('campeonatos.public.share', $campeonato) }}" target="_blank" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                            Compartir
-                        </a>
-                        @endcan
-                        
-                        @if($campeonato->reglamento_tipo)
-                        <button @click="$dispatch('open-reglamento-modal')" class="flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-md transition-colors duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v2.5a2.5 2.5 0 0 1-2.5 2.5H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2H20"/><path d="M12 2a4 4 0 0 1 4 4v1.5a2.5 2.5 0 0 1 2.5 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H8.5A2.5 2.5 0 0 1 6 12.5V6a4 4 0 0 1 4-4z"/></svg>
-                            Ver Reglamento
-                        </button>
-                        @endif
-                        
-                        @can('manage-campeonato', $campeonato)
-                        <a href="{{ route('campeonatos.edit', $campeonato) }}" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            Editar Campeonato
-                        </a>
-                        @endcan
-                        @can('update', $campeonato)
-                        <form id="toggle-registrations-form" action="{{ route('campeonatos.toggle-registrations', $campeonato) }}" method="POST" class="w-full" x-data>
-                            @csrf
-                            @method('PATCH')
-                            <div class="flex flex-col items-center">
-                                <button type="submit" class="w-full flex items-center justify-center {{ $campeonato->registrations_open ? 'bg-red-500 hover:bg-red-400' : 'bg-green-500 hover:bg-green-400' }} text-white px-3 py-2 rounded-md transition-colors duration-300">
-                                    @if($campeonato->registrations_open)
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                                    Cerrar Registros
-                                    @else
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-                                    Abrir Registros
-                                    @endif
+                    <div x-data="{ open: false }" class="relative">
+                        <div class="hidden md:flex flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2">
+                            @can('share', $campeonato)
+                            <a href="{{ route('campeonatos.public.share', $campeonato) }}" target="_blank" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                Compartir
+                            </a>
+                            @endcan
+                            
+                            @if($campeonato->reglamento_tipo)
+                            <button @click="$dispatch('open-reglamento-modal')" class="flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-md transition-colors duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v2.5a2.5 2.5 0 0 1-2.5 2.5H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2H20"/><path d="M12 2a4 4 0 0 1 4 4v1.5a2.5 2.5 0 0 1 2.5 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H8.5A2.5 2.5 0 0 1 6 12.5V6a4 4 0 0 1 4-4z"/></svg>
+                                Ver Reglamento
+                            </button>
+                            @endif
+                            
+                            @can('manage-campeonato', $campeonato)
+                            <a href="{{ route('campeonatos.edit', $campeonato) }}" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Editar Campeonato
+                            </a>
+                            @endcan
+                            @can('update', $campeonato)
+                            <form id="toggle-registrations-form" action="{{ route('campeonatos.toggle-registrations', $campeonato) }}" method="POST" class="w-full" x-data>
+                                @csrf
+                                @method('PATCH')
+                                <div class="flex flex-col items-center">
+                                    <button type="submit" class="w-full flex items-center justify-center {{ $campeonato->registrations_open ? 'bg-red-500 hover:bg-red-400' : 'bg-green-500 hover:bg-green-400' }} text-white px-3 py-2 rounded-md transition-colors duration-300">
+                                        @if($campeonato->registrations_open)
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                                        Cerrar Registros
+                                        @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                        Abrir Registros
+                                        @endif
+                                    </button>
+                                    <p class="text-center mt-2 text-base text-white">Este botón permite {{ $campeonato->registrations_open ? 'cerrar' : 'abrir' }} las inscripciones al campeonato.</p>
+                                </div>
+                            </form>
+                            @endcan
+                        </div>
+
+                        <!-- Dropdown for small screens -->
+                        <div class="md:hidden flex justify-end">
+                            <button @click="open = !open" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                                <span class="ml-2">Opciones</span>
+                            </button>
+                            <div x-show="open" @click.away="open = false" class="absolute left-0 right-0 mx-auto mt-2 w-full max-w-xs sm:max-w-sm md:w-48 bg-white rounded-md shadow-lg z-10">
+                                @can('share', $campeonato)
+                                <a href="{{ route('campeonatos.public.share', $campeonato) }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Compartir
+                                </a>
+                                @endcan
+                                
+                                @if($campeonato->reglamento_tipo)
+                                <button @click="$dispatch('open-reglamento-modal'); open = false;" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Ver Reglamento
                                 </button>
-                                <p class="text-center mt-2 text-base text-white">Este botón permite {{ $campeonato->registrations_open ? 'cerrar' : 'abrir' }} las inscripciones al campeonato.</p>
+                                @endif
+                                
+                                @can('manage-campeonato', $campeonato)
+                                <a href="{{ route('campeonatos.edit', $campeonato) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Editar Campeonato
+                                </a>
+                                @endcan
+                                @can('update', $campeonato)
+                                <form id="toggle-registrations-form-mobile" action="{{ route('campeonatos.toggle-registrations', $campeonato) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        @if($campeonato->registrations_open)
+                                        Cerrar Registros
+                                        @else
+                                        Abrir Registros
+                                        @endif
+                                    </button>
+                                </form>
+                                @endcan
                             </div>
-                        </form>
-                        @endcan
+                        </div>
                     </div>
                 </div>
                 
@@ -135,19 +177,19 @@
         }">
             <!-- Tab Navigation -->
             <div class="border-b-2 border-gray-200 mb-6 flex overflow-x-auto space-x-6">
-                <button @click="activeTab = 'tabla'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'tabla', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'tabla' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
-                    Tabla de Posiciones
+                <button @click="activeTab = 'tabla'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'tabla', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'tabla' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
+                    Tabla
                 </button>
-                <button @click="activeTab = 'partidos'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'partidos', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'partidos' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
+                <button @click="activeTab = 'partidos'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'partidos', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'partidos' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
                     Partidos
                 </button>
-                <button @click="activeTab = 'goleadores'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'goleadores', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'goleadores' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
+                <button @click="activeTab = 'goleadores'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'goleadores', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'goleadores' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
                     Goleadores
                 </button>
-                <button @click="activeTab = 'fairplay'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'fairplay', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'fairplay' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
+                <button @click="activeTab = 'fairplay'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'fairplay', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'fairplay' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
                     Fair Play
                 </button>
-                <button @click="activeTab = 'sancionados'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'sancionados', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'sancionados' }" class="whitespace-nowrap py-3 px-1 border-b-2 transition-colors duration-300">
+                <button @click="activeTab = 'sancionados'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'sancionados', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'sancionados' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
                     Sancionados
                 </button>
             </div>
@@ -219,7 +261,7 @@
                                             <option value="ida_vuelta">Ida y vuelta</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors duration-300 flex-shrink-0 w-full"
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center transition-colors duration-300 flex-shrink-0 w-full text-sm sm:text-base"
                                         {{ $campeonato->partidos->count() > 0 ? 'disabled' : '' }}
                                         @if($campeonato->partidos->count() > 0)
                                             @mouseover="showTooltip = true"
@@ -239,10 +281,9 @@
                             </div>
                             
                             @if($campeonato->partidos->count() > 0)
-                            <form action="{{ route('campeonatos.reset-calendar', $campeonato) }}" method="POST" onsubmit="return confirm('¡ADVERTENCIA! Estás a punto de reiniciar completamente el calendario de este campeonato. Esto eliminará TODOS los partidos (jugados, pendientes, cancelados) y sus estadísticas asociadas. Esta acción no se puede deshacer. ¿Estás absolutamente seguro de que deseas continuar?');" class="flex-grow sm:flex-grow-0">
+                            <form action="{{ route('campeonatos.reset-calendar', $campeonato) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres reiniciar el calendario? Todos los partidos y sus resultados se eliminarán permanentemente.');" class="w-full sm:w-auto">
                                 @csrf
-                                @method('DELETE')
-                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-colors duration-300 w-full justify-center">
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg flex items-center transition-colors duration-300 w-full sm:w-auto justify-center text-sm sm:text-base">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 14v-4m-7-7h4m14 0h-4M4.93 4.93l2.83 2.83m8.24 8.24l2.83 2.83M4.93 19.07l2.83-2.83m8.24-8.24l2.83-2.83"/></svg>
                                     Reiniciar Calendario
                                 </button>
@@ -533,7 +574,7 @@
                     <div class="flex justify-between items-center mb-4 cursor-pointer" @click="openDelegates = !openDelegates">
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Delegados</h2>
                         <div class="flex items-center space-x-2">
-                                                    <button @click.stop="$dispatch('open-add-delegate-team-modal')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center transition-colors duration-300">
+                                                    <button @click.stop="$dispatch('open-add-delegate-team-modal')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg font-semibold flex items-center transition-colors duration-300 text-sm sm:text-base">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             Agregar Equipo
                         </button>
@@ -702,4 +743,5 @@
         </main>
     </div>
     <x-add-delegate-and-team-modal :campeonato="$campeonato" />
+    <x-campeonato-reglamento-modal :campeonato="$campeonato" />
 </x-app-layout>

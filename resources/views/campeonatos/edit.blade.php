@@ -19,11 +19,7 @@
                             <input type="text" name="nombre_torneo" id="nombre_torneo" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{ old('nombre_torneo', $campeonato->nombre_torneo) }}" required>
                         </div>
 
-                        <!-- URL de la Imagen (Opcional) -->
-                        <div class="mb-4">
-                            <label for="imagen_url" class="block text-gray-700 text-sm font-bold mb-2">URL de la Imagen (Opcional):</label>
-                            <input type="url" name="imagen_url" id="imagen_url" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ej: https://ejemplo.com/imagen.jpg" value="{{ old('imagen_url', $campeonato->imagen_url) }}">
-                        </div>
+                        
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <!-- Equipos Máximos -->

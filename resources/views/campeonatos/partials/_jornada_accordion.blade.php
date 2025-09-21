@@ -9,22 +9,10 @@
 
     {{-- Contenido de la Jornada (Colapsable) --}}
     <div x-show="openJornada === {{ $jornada }}" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-4" class="border-t border-gray-200 p-4">
-        @php
-            // Lógica para encontrar el equipo que descansa en esta jornada
-            $allTeamIds = $campeonato->equipos->pluck('id')->toArray();
-            $playingTeamIds = $matches->pluck('equipo_local_id')->concat($matches->pluck('equipo_visitante_id'))->unique()->toArray();
-            $restingTeamIds = array_diff($allTeamIds, $playingTeamIds);
-            $restingTeamName = null;
-            if (!empty($restingTeamIds)) {
-                $restingTeam = \App\Models\Equipo::find(reset($restingTeamIds));
-                if ($restingTeam) {
-                    $restingTeamName = $restingTeam->nombre;
-                }
-            }
-        @endphp
-        @if($restingTeamName)
+        
+        @if(isset($restingTeamsByJornada[$jornada]))
             <div class="bg-blue-50 text-blue-700 p-3 rounded-lg mb-4 text-sm text-center font-semibold border border-blue-200">
-                Descansa: {{ $restingTeamName }}
+                Descansa: {{ $restingTeamsByJornada[$jornada] }}
             </div>
         @endif
 

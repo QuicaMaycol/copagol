@@ -41,22 +41,51 @@ class CampeonatoController extends Controller
         $campeonato->load('equipos', 'partidos.estadisticasJugadores.jugador', 'organizador');
 
         // Lógica para obtener goleadores, tabla de posiciones, etc.
-        // Por ejemplo:
         $goleadores = $this->getGoleadores($campeonato);
         $tablaPosiciones = $this->getTablaPosiciones($campeonato);
 
         // Find the featured match (next upcoming match)
         $featuredMatch = $campeonato->partidos()
-            ->with('equipoLocal', 'equipoVisitante') // Eager load teams for the featured match
+            ->with('equipoLocal', 'equipoVisitante')
             ->where('estado', '!=', 'finalizado')
             ->orderBy('fecha_partido', 'asc')
             ->first();
+
+        // --- Lógica para calcular restingTeamsByJornada ---
+        $restingTeamsByJornada = [];
+        $teams = $campeonato->equipos;
+        $numTeams = $teams->count();
+        $partidos = $campeonato->partidos->sortBy('jornada');
+
+        if ($numTeams % 2 !== 0) { // Solo si hay un número impar de equipos, un equipo descansa
+            $maxJornada = $partidos->max('jornada');
+            for ($jornada = 1; $jornada <= $maxJornada; $jornada++) {
+                $playingTeamIdsInJornada = $partidos->where('jornada', $jornada)
+                                                    ->pluck('equipo_local_id')
+                                                    ->merge($partidos->where('jornada', $jornada)->pluck('equipo_visitante_id'))
+                                                    ->filter() // Eliminar nulos si los hay
+                                                    ->unique()
+                                                    ->toArray();
+                
+                $allRealTeamIds = $teams->pluck('id')->toArray();
+                $restingTeamIds = array_diff($allRealTeamIds, $playingTeamIdsInJornada);
+
+                if (!empty($restingTeamIds)) {
+                    $restingTeam = \App\Models\Equipo::find(reset($restingTeamIds));
+                    if ($restingTeam) {
+                        $restingTeamsByJornada[$jornada] = $restingTeam->nombre;
+                    }
+                }
+            }
+        }
+        // --- Fin de la lógica ---
 
         return view('campeonatos.public_share', [
             'campeonato' => $campeonato,
             'goleadores' => $goleadores,
             'tablaPosiciones' => $tablaPosiciones,
-            'featuredMatch' => $featuredMatch, // Pass the featured match to the view
+            'featuredMatch' => $featuredMatch,
+            'restingTeamsByJornada' => $restingTeamsByJornada, // Pasar la variable a la vista
         ]);
     }
 
