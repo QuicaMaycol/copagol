@@ -16,6 +16,31 @@
             <p class="text-md text-gray-600">Organizado por {{ $campeonato->organizador->name }}</p>
         </div>
 
+        <!-- Featured Match -->
+        @if($featuredMatch)
+            <div class="max-w-4xl mx-auto mb-8">
+                <a href="{{ route('partidos.public_show', ['partido' => $featuredMatch->id]) }}" class="block bg-white rounded-lg shadow-lg p-6 hover:bg-gray-100 transition-colors duration-200">
+                    <div class="text-center text-sm font-semibold text-blue-600 mb-2">
+                        <span>PRÓXIMO PARTIDO &middot; Jornada {{ $featuredMatch->jornada }}</span>
+                    </div>
+                    <div class="flex items-center justify-around text-xl md:text-2xl font-bold">
+                        <div class="flex-1 text-center">
+                            <img src="{{ $featuredMatch->equipoLocal->imagen_url ?? 'http://static.photos/sport/80x80/' . $featuredMatch->equipoLocal->id }}" alt="{{ $featuredMatch->equipoLocal->nombre }}" class="w-16 h-16 mx-auto mb-2 rounded-full object-cover">
+                            <h3 class="text-gray-800">{{ $featuredMatch->equipoLocal->nombre }}</h3>
+                        </div>
+                        <div class="w-24 text-center font-extrabold text-3xl md:text-4xl mx-2 text-gray-700">
+                            <span>{{ \Carbon\Carbon::parse($featuredMatch->fecha_partido)->format('H:i') }}</span>
+                            <div class="text-sm font-normal text-gray-500">{{ \Carbon\Carbon::parse($featuredMatch->fecha_partido)->format('d M') }}</div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <img src="{{ $featuredMatch->equipoVisitante->imagen_url ?? 'http://static.photos/sport/80x80/' . $featuredMatch->equipoVisitante->id }}" alt="{{ $featuredMatch->equipoVisitante->nombre }}" class="w-16 h-16 mx-auto mb-2 rounded-full object-cover">
+                            <h3 class="text-gray-800">{{ $featuredMatch->equipoVisitante->nombre }}</h3>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        @endif
+
         <!-- Pestañas para Próximos y Resultados -->
         <div x-data="{ activeTab: 'proximos' }" class="w-full max-w-4xl mx-auto">
             <div class="flex justify-center border-b-2 border-gray-200 mb-4">

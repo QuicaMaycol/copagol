@@ -45,10 +45,18 @@ class CampeonatoController extends Controller
         $goleadores = $this->getGoleadores($campeonato);
         $tablaPosiciones = $this->getTablaPosiciones($campeonato);
 
+        // Find the featured match (next upcoming match)
+        $featuredMatch = $campeonato->partidos()
+            ->with('equipoLocal', 'equipoVisitante') // Eager load teams for the featured match
+            ->where('estado', '!=', 'finalizado')
+            ->orderBy('fecha_partido', 'asc')
+            ->first();
+
         return view('campeonatos.public_share', [
             'campeonato' => $campeonato,
             'goleadores' => $goleadores,
             'tablaPosiciones' => $tablaPosiciones,
+            'featuredMatch' => $featuredMatch, // Pass the featured match to the view
         ]);
     }
 
