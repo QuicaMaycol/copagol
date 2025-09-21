@@ -13,11 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
-    try {
-        return 'La aplicación web se está conectando a la base de datos: ' . DB::connection()->getDatabaseName();
-    } catch (\Exception $e) {
-        return 'No se pudo conectar a la base de datos. Error: ' . $e->getMessage();
-    }
+    return view('welcome');
 });
 
 Route::get('/campeonatos/{campeonato}/compartir', [CampeonatoController::class, 'publicShare'])->name('campeonatos.public.share');
