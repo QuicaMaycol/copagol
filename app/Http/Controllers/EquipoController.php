@@ -233,4 +233,18 @@ class EquipoController extends Controller
 
         return Redirect::route('campeonatos.show', $equipo->campeonato_id)->with('success', 'Equipo eliminado con éxito.');
     }
+
+    public function publicShow(Equipo $equipo)
+    {
+        $equipo->load('jugadores', 'campeonato.organizador');
+
+        $jugadores = $equipo->jugadores->map(function ($jugador) {
+            $jugador->edad = \Carbon\Carbon::parse($jugador->fecha_nacimiento)->age;
+            return $jugador;
+        });
+
+        $goleadores = $jugadores->where('goles', '>', 0)->sortByDesc('goles');
+
+        return view('equipos.public_show', compact('equipo', 'jugadores', 'goleadores'));
+    }
 }

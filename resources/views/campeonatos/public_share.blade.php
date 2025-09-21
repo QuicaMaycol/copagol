@@ -109,7 +109,11 @@
                                     @foreach($tablaPosiciones as $index => $team)
                                         <tr class="border-b border-gray-200 hover:bg-gray-100">
                                             <td class="py-3 px-4 text-left font-semibold">{{ $index + 1 }}</td>
-                                            <td class="py-3 px-4 text-left">{{ $team['nombre'] }}</td>
+                                            <td class="py-3 px-4 text-left">
+                                                <a href="{{ route('equipos.public_show', ['equipo' => $team['id']]) }}" class="hover:underline text-blue-600">
+                                                    {{ $team['nombre'] }}
+                                                </a>
+                                            </td>
                                             <td class="py-3 px-4 text-center font-bold">{{ $team['Pts'] }}</td>
                                             <td class="py-3 px-4 text-center">{{ $team['PJ'] }}</td>
                                             <td class="py-3 px-4 text-center text-green-500">{{ $team['PG'] }}</td>
