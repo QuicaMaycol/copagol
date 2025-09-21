@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pb-12">
+    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pb-12" x-data="shareComponent()">
         <!-- Tournament Header -->
         <header class="bg-[#2A3A5B] text-white py-6 px-4 sm:px-6 lg:px-8 shadow-md">
             <div class="container mx-auto">
@@ -12,10 +12,10 @@
                     <div x-data="{ open: false }" class="relative">
                         <div class="hidden md:flex flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2">
                             @can('share', $campeonato)
-                            <a href="{{ route('campeonatos.public.share', $campeonato) }}" target="_blank" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
+                            <button @click="share('{{ route('campeonatos.public.share', $campeonato) }}', '{{ $campeonato->nombre_torneo }}')" class="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors duration-300">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                                 Compartir
-                            </a>
+                            </button>
                             @endcan
                             
                             @if($campeonato->reglamento_tipo)
@@ -59,9 +59,9 @@
                             </button>
                             <div x-show="open" @click.away="open = false" class="absolute left-0 right-0 mx-auto mt-2 w-full max-w-xs sm:max-w-sm md:w-48 bg-white rounded-md shadow-lg z-10">
                                 @can('share', $campeonato)
-                                <a href="{{ route('campeonatos.public.share', $campeonato) }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <button @click="share('{{ route('campeonatos.public.share', $campeonato) }}', '{{ $campeonato->nombre_torneo }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Compartir
-                                </a>
+                                </button>
                                 @endcan
                                 
                                 @if($campeonato->reglamento_tipo)
@@ -744,4 +744,23 @@
     </div>
     <x-add-delegate-and-team-modal :campeonato="$campeonato" />
     <x-campeonato-reglamento-modal :campeonato="$campeonato" />
+    <x-share-modal />
+
+    <script>
+        function shareComponent() {
+          return {
+            share(shareUrl, title) {
+              if (navigator.share) {
+                navigator.share({
+                  title: title,
+                  text: `Échale un vistazo al campeonato: ${title}`,
+                  url: shareUrl
+                }).catch(console.error);
+              } else {
+                this.$dispatch('open-share-modal', { url: shareUrl });
+              }
+            }
+          }
+        }
+    </script>
 </x-app-layout>
