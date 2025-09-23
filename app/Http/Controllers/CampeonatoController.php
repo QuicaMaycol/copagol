@@ -48,6 +48,7 @@ class CampeonatoController extends Controller
         $featuredMatch = $campeonato->partidos()
             ->with('equipoLocal', 'equipoVisitante')
             ->where('estado', '!=', 'finalizado')
+            ->where('fecha_partido', '>=', now())
             ->orderBy('fecha_partido', 'asc')
             ->first();
 

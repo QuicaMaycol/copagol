@@ -337,24 +337,31 @@
                                         @foreach($partidosEnJornada as $partido)
                                         <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 {{ in_array($partido->id, $duplicateMatchIds ?? []) ? 'border-red-500' : 'border-blue-500' }}">
                                             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                                <div class="w-full flex-grow flex flex-col sm:flex-row items-center sm:justify-between gap-2">
+                                                <div class="w-full flex-grow flex flex-col sm:flex-row items-center justify-center gap-2">
                                                     <!-- Local Team -->
-                                                    <div class="flex items-center space-x-3">
+                                                    <div class="sm:flex-1 flex items-center justify-center sm:justify-end space-x-3">
+                                                        <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoLocal->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }} text-right">{{ $partido->equipoLocal->nombre }}</span>
                                                         <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoLocal->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoLocal->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Local">
-                                                        <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoLocal->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoLocal->nombre }}</span>
                                                     </div>
                                                     
-                                                    <div class="font-bold text-gray-500">vs</div>
+                                                    <!-- Center Info -->
+                                                    <div class="text-center flex-shrink-0 px-4">
+                                                        <div class="font-bold text-gray-500">vs</div>
+                                                        <div class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($partido->fecha_partido)->format('H:i') }}</div>
+                                                    </div>
                                         
                                                     <!-- Visitor Team -->
-                                                    <div class="flex items-center space-x-3">
-                                                        <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoVisitante->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }}">{{ $partido->equipoVisitante->nombre }}</span>
+                                                    <div class="sm:flex-1 flex items-center justify-center sm:justify-start space-x-3">
                                                         <img class="h-8 w-8 rounded-full object-cover" src="{{ $partido->equipoVisitante->imagen_url ?: 'https://ui-avatars.com/api/?name=' . urlencode($partido->equipoVisitante->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="Logo Equipo Visitante">
+                                                        <span class="font-semibold text-gray-800 dark:text-gray-100 {{ in_array($partido->equipoVisitante->id, $duplicateTeamsInJornada) ? 'text-red-500' : '' }} text-left">{{ $partido->equipoVisitante->nombre }}</span>
                                                     </div>
                                                 </div>
                                         
                                                 <!-- Actions -->
                                                 <div class="flex items-center space-x-2 flex-shrink-0">
+                                                    @if($partido->estado === 'suspendido')
+                                                        <span class="inline-block bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">Suspendido</span>
+                                                    @endif
                                                     <button @click="getSancionados({{ $partido->id }})" class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-full transition-colors duration-300" title="Ver Sancionados">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                                     </button>
