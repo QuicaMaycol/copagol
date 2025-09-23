@@ -19,16 +19,17 @@
         @foreach($matches->sortBy('fecha_partido') as $match)
             <a href="{{ route('partidos.public_show', ['partido' => $match->id]) }}" class="block mb-2 last:mb-0 p-3 hover:bg-gray-50 rounded-lg transition-colors duration-200">
                 <div class="flex items-center justify-between text-sm text-gray-500 mb-1">
-                    <span>{{ \Carbon\Carbon::parse($match->fecha_partido)->translatedFormat('D d M, H:i') }}</span>
+                    <span>{{ \Carbon\Carbon::parse($match->fecha_partido)->translatedFormat('D d M') }}</span>
                     <span>{{ $match->ubicacion_partido ?? '' }}</span>
                 </div>
                 <div class="flex items-center text-lg">
                     <div class="flex-1 text-right font-bold text-gray-800">{{ $match->equipoLocal->nombre }}</div>
-                    <div class="w-24 text-center font-extrabold text-xl mx-2">
+                    <div class="w-24 text-center mx-2">
                         @if($isResultados)
-                            <span class="bg-gray-800 text-white px-3 py-1 rounded-md">{{ $match->goles_local }} - {{ $match->goles_visitante }}</span>
+                            <span class="bg-gray-800 text-white px-3 py-1 rounded-md font-extrabold text-xl">{{ $match->goles_local }} - {{ $match->goles_visitante }}</span>
                         @else
-                            <span class="text-gray-400">vs</span>
+                            <div class="font-bold text-gray-500">vs</div>
+                            <div class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($match->fecha_partido)->format('H:i') }}</div>
                         @endif
                     </div>
                     <div class="flex-1 text-left font-bold text-gray-800">{{ $match->equipoVisitante->nombre }}</div>
