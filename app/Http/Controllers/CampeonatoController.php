@@ -720,6 +720,10 @@ class CampeonatoController extends Controller
         $allMatches = $partido->campeonato->partidos;
         $existingPairings = [];
         foreach ($allMatches as $match) {
+            // Exclude the current match from the check
+            if ($match->id === $partido->id) {
+                continue;
+            }
             if ($match->equipo_local_id && $match->equipo_visitante_id) {
                 $pair = collect([$match->equipo_local_id, $match->equipo_visitante_id])->sort()->values()->all();
                 $existingPairings[$pair[0] . '-' . $pair[1]] = true;
