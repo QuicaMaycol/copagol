@@ -181,4 +181,52 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const localSelect = document.getElementById('equipo_local_id');
+        const visitanteSelect = document.getElementById('equipo_visitante_id');
+        const existingPairings = @json($existingPairings);
+
+        function getPairKey(team1Id, team2Id) {
+            if (!team1Id || !team2Id) return null;
+            return [team1Id, team2Id].sort().join('-');
+        }
+
+        function updateOptions(sourceSelect, targetSelect) {
+            const sourceId = sourceSelect.value;
+
+            for (let option of targetSelect.options) {
+                const targetId = option.value;
+                
+                // Reset text and style
+                option.text = option.text.replace(/ \((Ya jugó|Disponible)\)$/, '');
+                option.style.color = '';
+
+                if (sourceId && targetId && sourceId !== targetId) {
+                    const pairKey = getPairKey(sourceId, targetId);
+                    if (existingPairings[pairKey]) {
+                        option.text += ' (Ya jugó)';
+                        option.style.color = 'red';
+                    } else {
+                        option.text += ' (Disponible)';
+                        option.style.color = 'green';
+                    }
+                }
+            }
+        }
+
+        localSelect.addEventListener('change', () => updateOptions(localSelect, visitanteSelect));
+        visitanteSelect.addEventListener('change', () => updateOptions(visitanteSelect, localSelect));
+
+        // Initial check on page load
+        if (localSelect.value) {
+            updateOptions(localSelect, visitanteSelect);
+        }
+        if (visitanteSelect.value) {
+            updateOptions(visitanteSelect, localSelect);
+        }
+    });
+    </script>
+    @endpush
 </x-app-layout>

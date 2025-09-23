@@ -716,7 +716,17 @@ class CampeonatoController extends Controller
         // Load all teams for the championship to populate dropdowns
         $teams = $partido->campeonato->equipos;
 
-        return view('partidos.edit', compact('partido', 'playerStats', 'teams'));
+        // Get all matches for the championship to check for existing pairings
+        $allMatches = $partido->campeonato->partidos;
+        $existingPairings = [];
+        foreach ($allMatches as $match) {
+            if ($match->equipo_local_id && $match->equipo_visitante_id) {
+                $pair = collect([$match->equipo_local_id, $match->equipo_visitante_id])->sort()->values()->all();
+                $existingPairings[$pair[0] . '-' . $pair[1]] = true;
+            }
+        }
+
+        return view('partidos.edit', compact('partido', 'playerStats', 'teams', 'existingPairings'));
     }
 
     /**
