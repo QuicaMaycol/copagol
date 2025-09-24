@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Campeonato;
 use App\Models\Jugador;
 use App\Models\Partido;
+use App\Models\Equipo;
 use Illuminate\Http\Request;
 
 class PartidoController extends Controller
@@ -96,6 +97,39 @@ class PartidoController extends Controller
     }
 
     /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create(Campeonato $campeonato)
+    {
+        $equipos = $campeonato->equipos;
+        return view('partidos.create', compact('campeonato', 'equipos'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request, Campeonato $campeonato)
+    {
+        $request->validate([
+            'equipo_local_id' => 'required|exists:equipos,id',
+            'equipo_visitante_id' => 'required|exists:equipos,id|different:equipo_local_id',
+            'fecha_partido' => 'required|date',
+            'jornada' => 'required|integer|min:1',
+        ]);
+
+        $partido = new Partido($request->all());
+        $partido->campeonato_id = $campeonato->id;
+        $partido->save();
+
+        return redirect()->route('campeonatos.show', $campeonato)->with('success', 'Partido creado exitosamente.');
+    }
+
+    /**
      * Display the public details of a specific match.
      *
      * @param  \App\Models\Partido  $partido
@@ -106,5 +140,41 @@ class PartidoController extends Controller
         $partido->load('equipoLocal.jugadores', 'equipoVisitante.jugadores', 'campeonato');
 
         return view('partidos.public_show', compact('partido'));
+    }
+
+    /**
+     * Obtiene los oponentes para un equipo en un campeonato, indicando si ya han jugado.
+     *
+     * @param  \App\Models\Campeonato  $campeonato
+     * @param  \App\Models\Equipo  $equipo
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getOponentes(Campeonato $campeonato, Equipo $equipo)
+    {
+        // Obtener todos los equipos del campeonato excepto el equipo local.
+        $todosLosOponentes = $campeonato->equipos()->where('id', '!=', $equipo->id)->get();
+
+        // Obtener los IDs de los equipos contra los que el equipo local ya ha jugado.
+        $partidosJugados = Partido::where('campeonato_id', $campeonato->id)
+            ->where(function ($query) use ($equipo) {
+                $query->where('equipo_local_id', $equipo->id)
+                      ->orWhere('equipo_visitante_id', $equipo->id);
+            })
+            ->get();
+
+        $oponentesJugadosIds = $partidosJugados->map(function ($partido) use ($equipo) {
+            return $partido->equipo_local_id == $equipo->id ? $partido->equipo_visitante_id : $partido->equipo_local_id;
+        })->unique();
+
+        // Formatear la respuesta.
+        $oponentesConEstado = $todosLosOponentes->map(function ($oponente) use ($oponentesJugadosIds) {
+            return [
+                'id' => $oponente->id,
+                'nombre' => $oponente->nombre,
+                'jugado' => $oponentesJugadosIds->contains($oponente->id),
+            ];
+        });
+
+        return response()->json($oponentesConEstado);
     }
 }

@@ -864,11 +864,15 @@ class CampeonatoController extends Controller
     /**
      * Remove the specified match from storage.
      */
-    public function destroyMatch(Partido $partido)
+    public function destroyMatch(Request $request, Partido $partido)
     {
         $this->authorize('manage-campeonato', $partido->campeonato);
 
         $partido->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Partido eliminado con éxito.']);
+        }
 
         return Redirect::back()->with('success', 'Partido eliminado con éxito.');
     }

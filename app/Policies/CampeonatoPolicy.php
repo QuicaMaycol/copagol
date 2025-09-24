@@ -11,6 +11,18 @@ class CampeonatoPolicy
     use HandlesAuthorization;
 
     /**
+     * Determine whether the user can manage the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Campeonato  $campeonato
+     * @return bool
+     */
+    public function manageCampeonato(User $user, Campeonato $campeonato)
+    {
+        return $user->role === 'admin' || $user->id === $campeonato->user_id;
+    }
+
+    /**
      * Determine whether the user can share the model.
      *
      * @param  \App\Models\User  $user

@@ -41,6 +41,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/campeonatos/{campeonato}/update-image', [CampeonatoController::class, 'updateImage'])->name('campeonatos.updateImage');
 
+    Route::get('/campeonatos/{campeonato}/partidos/create', [PartidoController::class, 'create'])->name('partidos.create');
+    Route::post('/campeonatos/{campeonato}/partidos', [PartidoController::class, 'store'])->name('partidos.store');
+    Route::get('/campeonatos/{campeonato}/equipos/{equipo}/oponentes', [PartidoController::class, 'getOponentes'])->name('partidos.oponentes');
+
     Route::post('/partidos/{partido}/store-result', [CampeonatoController::class, 'storeResult'])->name('partidos.store-result');
     Route::get('/partidos/{partido}/edit', [CampeonatoController::class, 'editMatch'])->name('partidos.edit');
     Route::put('/partidos/{partido}', [CampeonatoController::class, 'updateMatch'])->name('partidos.update');

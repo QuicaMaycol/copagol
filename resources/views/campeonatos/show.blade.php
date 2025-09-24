@@ -155,8 +155,8 @@
             @endif
         @endauth
         <!-- Main Content -->
-        <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="{ 
-            activeTab: 'partidos', 
+        <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="{
+            activeTab: 'partidos',
             showSancionadosModal: false,
             sancionados: [],
             conAmarilla: [],
@@ -173,7 +173,41 @@
                         this.conAmarilla = data.conAmarilla;
                         this.loading = false;
                     });
-            } 
+            },
+            showDeleteModal: false,
+            deleteUrl: '',
+            partidoElementId: '',
+            deletePartido() {
+                fetch(this.deleteUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al eliminar el partido.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const element = document.getElementById(this.partidoElementId);
+                        if (element) {
+                            element.style.transition = 'opacity 0.5s ease';
+                            element.style.opacity = '0';
+                            setTimeout(() => element.remove(), 500);
+                        }
+                    }
+                    this.showDeleteModal = false;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.showDeleteModal = false;
+                });
+            }
         }">
             <!-- Tab Navigation -->
             <div class="border-b-2 border-gray-200 mb-6 flex overflow-x-auto space-x-6">
@@ -261,16 +295,19 @@
                                             <option value="ida_vuelta">Ida y vuelta</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center transition-colors duration-300 flex-shrink-0 w-full text-sm sm:text-base"
-                                        {{ $campeonato->partidos->count() > 0 ? 'disabled' : '' }}
+                                    <div
                                         @if($campeonato->partidos->count() > 0)
                                             @mouseover="showTooltip = true"
                                             @mouseleave="showTooltip = false"
                                         @endif
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                        Generar Calendario
-                                    </button>
+                                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center transition-colors duration-300 flex-shrink-0 w-full text-sm sm:text-base"
+                                            {{ $campeonato->partidos->count() > 0 ? 'disabled' : '' }}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                            Generar Calendario
+                                        </button>
+                                    </div>
                                 </form>
                                 <template x-if="showTooltip">
                                     <div class="absolute z-10 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm dark:bg-gray-700" style="bottom: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap;">
@@ -279,9 +316,16 @@
                                     </div>
                                 </template>
                             </div>
+
+                            <a href="{{ route('partidos.create', $campeonato) }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg flex items-center transition-colors duration-300 w-full sm:w-auto justify-center text-sm sm:text-base self-end mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Agregar Partido
+                            </a>
                             
                             @if($campeonato->partidos->count() > 0)
-                            <form action="{{ route('campeonatos.reset-calendar', $campeonato) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres reiniciar el calendario? Todos los partidos y sus resultados se eliminarán permanentemente.');" class="w-full sm:w-auto">
+                            <form action="{{ route('campeonatos.reset-calendar', $campeonato) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres reiniciar el calendario? Todos los partidos y sus resultados se eliminarán permanentemente.');" class="w-full sm:w-auto self-end mb-4">
                                 @csrf
                                 <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg flex items-center transition-colors duration-300 w-full sm:w-auto justify-center text-sm sm:text-base">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 14v-4m-7-7h4m14 0h-4M4.93 4.93l2.83 2.83m8.24 8.24l2.83 2.83M4.93 19.07l2.83-2.83m8.24-8.24l2.83-2.83"/></svg>
@@ -335,7 +379,7 @@
                                     </div>
                                     <div class="space-y-4" x-show="open" x-collapse>
                                         @foreach($partidosEnJornada as $partido)
-                                        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 {{ in_array($partido->id, $duplicateMatchIds ?? []) ? 'border-red-500' : 'border-blue-500' }}">
+                                        <div id="partido-{{ $partido->id }}" class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-sm border-l-4 {{ in_array($partido->id, $duplicateMatchIds ?? []) ? 'border-red-500' : 'border-blue-500' }}">
                                             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                                                 <div class="w-full flex-grow flex flex-col sm:flex-row items-center justify-center gap-2">
                                                     <!-- Local Team -->
@@ -369,6 +413,9 @@
                                                     <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300" title="Editar Partido">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                     </a>
+                                                    <button @click="showDeleteModal = true; deleteUrl = '{{ route('partidos.destroy', $partido) }}'; partidoElementId = 'partido-{{ $partido->id }}';" type="button" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors duration-300" title="Eliminar Partido">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                    </button>
                                                     @endcan
                                                 </div>
                                             </div>
@@ -741,6 +788,32 @@
                         <div class="mt-6">
                             <button @click="showSancionadosModal = false" type="button" class="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div x-show="showDeleteModal" x-on:keydown.escape.window="showDeleteModal = false" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title-delete" role="dialog" aria-modal="true" style="display: none;">
+                <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                    <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="showDeleteModal = false" aria-hidden="true"></div>
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                    <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100" id="modal-title-delete">
+                            Eliminar Partido
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                ¿Estás seguro de que quieres eliminar este partido? Esta acción no se puede deshacer.
+                            </p>
+                        </div>
+                        <div class="mt-4 flex justify-end space-x-2">
+                            <button @click="showDeleteModal = false" type="button" class="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-transparent rounded-md hover:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500">
+                                Cancelar
+                            </button>
+                            <button @click="deletePartido()" type="button" class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500">
+                                Eliminar
                             </button>
                         </div>
                     </div>
