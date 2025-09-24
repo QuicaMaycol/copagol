@@ -391,7 +391,8 @@
                                                     <!-- Center Info -->
                                                     <div class="text-center flex-shrink-0 px-4">
                                                         <div class="font-bold text-gray-500">vs</div>
-                                                        <div class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($partido->fecha_partido)->format('H:i') }}</div>
+                                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ \Carbon\Carbon::parse($partido->fecha_partido)->format('H:i') }}</div>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ \Carbon\Carbon::parse($partido->fecha_partido)->format('d/m/Y') }}</div>
                                                     </div>
                                         
                                                     <!-- Visitor Team -->
