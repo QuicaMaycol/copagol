@@ -1,6 +1,6 @@
 import './bootstrap';
 
-import Alpine from 'alpinejs';
+import Alpine from 'alpinejs/dist/module.esm.js';
 import collapse from '@alpinejs/collapse';
 import feather from 'feather-icons';
 
