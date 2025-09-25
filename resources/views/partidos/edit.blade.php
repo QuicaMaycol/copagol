@@ -139,7 +139,18 @@
                                 <label for="equipo_visitante_id_detail" class="block text-sm font-medium text-gray-300">Equipo Visitante</label>
                                 <select name="equipo_visitante_id" id="equipo_visitante_id_detail" class="mt-1 block w-full bg-gray-700 border-gray-600 text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                     @foreach($teams as $team)
-                                        <option value="{{ $team->id }}" @selected($visitorTeamId == $team->id)>{{ $team->nombre }}</option>
+                                        @if($team->id != $localTeamId)
+                                            @php
+                                                $pair = collect([$localTeamId, $team->id])->sort()->values();
+                                                $pairKey = $pair[0] . '-' . $pair[1];
+                                                $hasPlayed = isset($existingPairings[$pairKey]);
+                                                $style = $hasPlayed ? 'color: #EF4444; font-weight: bold;' : 'color: #22C55E;';
+                                                $statusText = $hasPlayed ? '(Ya jugado)' : '(No jugado)';
+                                            @endphp
+                                            <option value="{{ $team->id }}" @selected($visitorTeamId == $team->id) style="{{ $style }}">
+                                                {{ $team->nombre }} {{ $statusText }}
+                                            </option>
+                                        @endif
                                     @endforeach
                                 </select>
                             </div>
