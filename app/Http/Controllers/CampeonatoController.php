@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Campeonato;
 use App\Models\Partido;
-use App\Models\Equipo; // Add this line
+use App\Models\Equipo;
 use App\Models\SystemLog;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\PartidoController;
 
 class CampeonatoController extends Controller
@@ -734,7 +735,7 @@ class CampeonatoController extends Controller
     }
 
     /**
-     * Update the specified match in storage.
+     * Update the specified match in storage using a delta-based approach for stats.
      */
     public function updateMatch(Request $request, Partido $partido)
     {
@@ -755,14 +756,14 @@ class CampeonatoController extends Controller
             'jugadores.*.rojas' => 'nullable|integer|min:0|max:1',
         ]);
 
-        // Check for conflicts: a team cannot play twice on the same date
+        // (The conflict check logic is good, I'll keep it)
         $fechaPartido = \Carbon\Carbon::parse($validatedData['fecha_partido'])->toDateString();
         $equipoLocalId = $validatedData['equipo_local_id'];
         $equipoVisitanteId = $validatedData['equipo_visitante_id'];
 
         $conflictingMatches = Partido::where('campeonato_id', $partido->campeonato_id)
             ->whereDate('fecha_partido', $fechaPartido)
-            ->where('id', '!=', $partido->id) // Exclude the current match being updated
+            ->where('id', '!=', $partido->id)
             ->where(function ($query) use ($equipoLocalId, $equipoVisitanteId) {
                 $query->where('equipo_local_id', $equipoLocalId)
                       ->orWhere('equipo_visitante_id', $equipoLocalId)
@@ -775,11 +776,10 @@ class CampeonatoController extends Controller
             $conflictingTeamIds = [];
             $inputTeams = [$equipoLocalId, $equipoVisitanteId];
 
-            // Find which of the teams submitted in the form are part of another match on the same day
             foreach ($inputTeams as $inputId) {
-                $isConflicting = $conflictingMatches->where(function ($match) use ($inputId) {
+                $isConflicting = $conflictingMatches->some(function ($match) use ($inputId) {
                     return $match->equipo_local_id == $inputId || $match->equipo_visitante_id == $inputId;
-                })->isNotEmpty();
+                });
 
                 if ($isConflicting) {
                     $conflictingTeamIds[] = $inputId;
@@ -792,71 +792,84 @@ class CampeonatoController extends Controller
                 $teamNames = \App\Models\Equipo::whereIn('id', $conflictingTeamIds)->pluck('nombre')->implode(', ');
                 $warningMessage = 'Advertencia: El/los equipo(s) (' . $teamNames . ') ya tienen un partido programado en esta fecha.';
                 
-                // Flash warning message and conflicting team IDs to the session
                 $request->session()->flash('warning', $warningMessage);
                 $request->session()->flash('conflicting_teams', $conflictingTeamIds);
             }
         }
 
-        // Update basic match details
-        $partido->update([
-            'fecha_partido' => $validatedData['fecha_partido'],
-            'ubicacion_partido' => $validatedData['ubicacion_partido'],
-            'estado' => $validatedData['estado'],
-            'goles_local' => $validatedData['goles_local'] ?? 0,
-            'goles_visitante' => $validatedData['goles_visitante'] ?? 0,
-            'equipo_local_id' => $validatedData['equipo_local_id'],
-            'equipo_visitante_id' => $validatedData['equipo_visitante_id'],
-        ]);
+        DB::transaction(function () use ($partido, $validatedData, $request) {
+            // 1. Get original stats before any changes
+            $statsOriginales = $partido->estadisticasJugadores->keyBy('jugador_id');
+            $jugadoresAfectados = $statsOriginales->keys();
 
-        // --- RECALCULATE PLAYER STATS AND APPLY SUSPENSIONS ---
-        $allPlayerIds = $partido->equipoLocal->jugadores->pluck('id')->merge($partido->equipoVisitante->jugadores->pluck('id'));
+            // 2. Update the match details itself
+            $partido->update([
+                'fecha_partido' => $validatedData['fecha_partido'],
+                'ubicacion_partido' => $validatedData['ubicacion_partido'],
+                'estado' => $validatedData['estado'],
+                'goles_local' => $validatedData['goles_local'] ?? 0,
+                'goles_visitante' => $validatedData['goles_visitante'] ?? 0,
+                'equipo_local_id' => $validatedData['equipo_local_id'],
+                'equipo_visitante_id' => $validatedData['equipo_visitante_id'],
+            ]);
 
-        foreach ($allPlayerIds as $jugadorId) {
-            $jugador = \App\Models\Jugador::find($jugadorId);
-            if (!$jugador) continue;
+            // 3. Process player stats from the form
+            $nuevosJugadoresStats = collect($validatedData['jugadores'] ?? []);
+            $jugadoresAfectados = $jugadoresAfectados->merge($nuevosJugadoresStats->keys())->unique();
 
-            // Update match-specific stats from the form
-            $stats = $validatedData['jugadores'][$jugadorId] ?? [
-                'goles' => 0, 'asistencias' => 0, 'amarillas' => 0, 'rojas' => 0
-            ];
-            
-            \App\Models\PartidoJugadorEstadistica::updateOrCreate(
-                ['partido_id' => $partido->id, 'jugador_id' => $jugadorId],
-                [
-                    'goles' => $stats['goles'] ?? 0,
-                    'asistencias' => $stats['asistencias'] ?? 0,
-                    'tarjetas_amarillas' => $stats['amarillas'] ?? 0,
-                    'tarjetas_rojas' => $stats['rojas'] ?? 0,
-                ]
-            );
+            foreach ($jugadoresAfectados as $jugadorId) {
+                $jugador = \App\Models\Jugador::find($jugadorId);
+                if (!$jugador) continue;
 
-            // Recalculate total stats from scratch for accuracy
-            $jugador->goles = $jugador->estadisticas()->sum('goles');
-            $jugador->tarjetas_amarillas = $jugador->estadisticas()->sum('tarjetas_amarillas');
-            $jugador->tarjetas_rojas = $jugador->estadisticas()->sum('tarjetas_rojas');
-            
-            // Reset suspension status before re-evaluating
-            $jugador->suspendido = false;
-            $jugador->suspended_until_match_id = null;
+                $statsOriginal = $statsOriginales->get($jugadorId);
+                $statsNuevas = $nuevosJugadoresStats->get($jugadorId) ?? [
+                    'goles' => 0, 'asistencias' => 0, 'amarillas' => 0, 'rojas' => 0
+                ];
 
-            // Apply suspension logic
-            $nextMatch = $this->getNextMatchForTeam($partido->campeonato, $jugador->equipo, $partido);
+                // Calculate deltas (difference between new and old stats for THIS match)
+                $golesDelta = ($statsNuevas['goles'] ?? 0) - ($statsOriginal->goles ?? 0);
+                // Assuming 'asistencias' column exists on Jugador model. If not, this line should be removed.
+                // $asistenciasDelta = ($statsNuevas['asistencias'] ?? 0) - ($statsOriginal->asistencias ?? 0);
+                $amarillasDelta = ($statsNuevas['amarillas'] ?? 0) - ($statsOriginal->tarjetas_amarillas ?? 0);
+                $rojasDelta = ($statsNuevas['rojas'] ?? 0) - ($statsOriginal->tarjetas_rojas ?? 0);
 
-            if ($nextMatch) {
-                // Red card suspension
-                if (($stats['rojas'] ?? 0) > 0) {
-                    $jugador->suspendido = true;
-                    $jugador->suspended_until_match_id = $nextMatch->id;
-                } 
-                // Accumulated yellow cards suspension (every 2 yellow cards)
-                elseif (($stats['amarillas'] ?? 0) > 0 && $jugador->tarjetas_amarillas > 0 && ($jugador->tarjetas_amarillas % 2 === 0)) {
-                    $jugador->suspendido = true;
-                    $jugador->suspended_until_match_id = $nextMatch->id;
+                // Update match-specific stats
+                \App\Models\PartidoJugadorEstadistica::updateOrCreate(
+                    ['partido_id' => $partido->id, 'jugador_id' => $jugadorId],
+                    [
+                        'goles' => $statsNuevas['goles'] ?? 0,
+                        'asistencias' => $statsNuevas['asistencias'] ?? 0,
+                        'tarjetas_amarillas' => $statsNuevas['amarillas'] ?? 0,
+                        'tarjetas_rojas' => $statsNuevas['rojas'] ?? 0,
+                    ]
+                );
+
+                // Apply deltas to the player's total stats
+                $jugador->goles = max(0, $jugador->goles + $golesDelta);
+                // $jugador->asistencias += $asistenciasDelta;
+                $jugador->tarjetas_amarillas = max(0, $jugador->tarjetas_amarillas + $amarillasDelta);
+                $jugador->tarjetas_rojas = max(0, $jugador->tarjetas_rojas + $rojasDelta);
+
+                // Reset suspension status before re-evaluating
+                $jugador->suspendido = false;
+                $jugador->suspended_until_match_id = null;
+
+                // Apply suspension logic based on the NEW totals
+                $nextMatch = $this->getNextMatchForTeam($partido->campeonato, $jugador->equipo, $partido);
+
+                if ($nextMatch) {
+                    if ($jugador->tarjetas_rojas > 0) {
+                        $jugador->suspendido = true;
+                        $jugador->suspended_until_match_id = $nextMatch->id;
+                    } elseif ($jugador->tarjetas_amarillas > 0 && ($jugador->tarjetas_amarillas % 2 === 0)) {
+                        $jugador->suspendido = true;
+                        $jugador->suspended_until_match_id = $nextMatch->id;
+                    }
                 }
+                
+                $jugador->save();
             }
-            $jugador->save();
-        }
+        });
 
         return redirect(route('campeonatos.show', $partido->campeonato) . '#partido-' . $partido->id)->with('success', 'Partido actualizado con éxito.');
     }
