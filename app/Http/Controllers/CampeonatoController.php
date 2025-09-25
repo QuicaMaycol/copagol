@@ -858,7 +858,7 @@ class CampeonatoController extends Controller
             $jugador->save();
         }
 
-        return Redirect::route('campeonatos.show', $partido->campeonato)->with('success', 'Partido actualizado con éxito.');
+        return redirect(route('campeonatos.show', $partido->campeonato) . '#partido-' . $partido->id)->with('success', 'Partido actualizado con éxito.');
     }
 
     /**

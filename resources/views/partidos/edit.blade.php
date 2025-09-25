@@ -1,11 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-200 leading-tight">
+            <h2 class="font-bold text-xl text-gray-800 leading-tight">
                 {{ __('Editar Partido') }}
             </h2>
-            <a href="{{ route('campeonatos.show', $partido->campeonato) }}" class="text-sm text-indigo-400 hover:underline">
-                &larr; Volver al Campeonato
+            <a href="{{ route('campeonatos.show', $partido->campeonato) }}" class="flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-300 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                <span class="hidden sm:inline ml-2">Volver</span>
             </a>
         </div>
     </x-slot>
@@ -147,4 +148,65 @@
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); }
     </style>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const campeonatoId = {{ $partido->campeonato_id }};
+            const equipoLocalSelect = document.getElementById('equipo_local_id_detail');
+            const equipoVisitanteSelect = document.getElementById('equipo_visitante_id_detail');
+
+            function updateOpponentList() {
+                const equipoLocalId = equipoLocalSelect.value;
+
+                if (!equipoLocalId) {
+                    return;
+                }
+
+                const currentVisitorId = equipoVisitanteSelect.value;
+
+                equipoVisitanteSelect.innerHTML = '<option value="">Cargando...</option>';
+                equipoVisitanteSelect.disabled = true;
+
+                const url = `/campeonatos/${campeonatoId}/equipos/${equipoLocalId}/oponentes`;
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(oponentes => {
+                        equipoVisitanteSelect.innerHTML = '<option value="">Seleccione un equipo</option>';
+                        
+                        oponentes.forEach(oponente => {
+                            const option = document.createElement('option');
+                            option.value = oponente.id;
+                            option.textContent = `${oponente.nombre} (${oponente.jugado ? 'Jugado' : 'Pendiente'})`;
+                            option.disabled = oponente.jugado;
+
+                            // Si el oponente es el equipo que ya estaba seleccionado, lo marcamos
+                            if (oponente.id == currentVisitorId) {
+                                option.selected = true;
+                            }
+                            
+                            if (oponente.jugado) {
+                                option.style.color = '#f87171'; // Red-400
+                            } else {
+                                option.style.color = '#4ade80'; // Green-400
+                            }
+                            equipoVisitanteSelect.appendChild(option);
+                        });
+
+                        equipoVisitanteSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar los oponentes:', error);
+                        equipoVisitanteSelect.innerHTML = '<option value="">Error al cargar</option>';
+                    });
+            }
+
+            // Add event listener
+            equipoLocalSelect.addEventListener('change', updateOpponentList);
+
+            // Initial load
+            if (equipoLocalSelect.value) {
+                updateOpponentList();
+            }
+        });
+    </script>
 </x-app-layout>

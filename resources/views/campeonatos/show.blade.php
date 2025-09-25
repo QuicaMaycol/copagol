@@ -452,7 +452,7 @@
                                     </div>
                                     <div class="space-y-4" x-show="open" x-collapse>
                                         @foreach($partidosEnJornada as $partido)
-                                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border-l-4 {{ $partido->goles_local > $partido->goles_visitante ? 'border-green-500' : ($partido->goles_local < $partido->goles_visitante ? 'border-red-500' : 'border-yellow-500') }}">
+                                        <div id="partido-{{ $partido->id }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border-l-4 {{ $partido->goles_local > $partido->goles_visitante ? 'border-green-500' : ($partido->goles_local < $partido->goles_visitante ? 'border-red-500' : 'border-yellow-500') }}">
                                             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                                                 <!-- Local Team -->
                                                 <div class="flex items-center space-x-3 w-full sm:w-auto justify-start flex-1">

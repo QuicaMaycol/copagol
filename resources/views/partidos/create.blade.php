@@ -2,10 +2,10 @@
     {{-- Custom Header --}}
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-200 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Crear Nuevo Partido') }}
             </h2>
-            <span class="text-sm font-medium text-gray-400">{{ $campeonato->nombre_campeonato }}</span>
+            <span class="text-sm font-medium text-gray-500">{{ $campeonato->nombre_campeonato }}</span>
         </div>
     </x-slot>
 
@@ -39,14 +39,27 @@
 
                             <!-- Fecha del Partido -->
                             <div>
-                                <label for="fecha_partido" class="block text-sm font-medium text-gray-300 mb-2">Fecha del Partido</label>
-                                <input type="datetime-local" name="fecha_partido" id="fecha_partido" class="block w-full bg-gray-700 border border-gray-600 text-gray-200 rounded-md shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <label for="fecha_partido" class="block text-sm font-medium text-gray-300 mb-2">Fecha del Partido (Opcional)</label>
+                                <input type="datetime-local" name="fecha_partido" id="fecha_partido" class="block w-full bg-gray-700 border border-gray-600 text-gray-200 rounded-md shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
 
                             <!-- Jornada -->
                             <div>
                                 <label for="jornada" class="block text-sm font-medium text-gray-300 mb-2">Jornada</label>
                                 <input type="number" name="jornada" id="jornada" class="block w-full bg-gray-700 border border-gray-600 text-gray-200 rounded-md shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required min="1" placeholder="Ej: 1">
+                            </div>
+
+                            <!-- Ubicacion -->
+                            <div class="md:col-span-2">
+                                <label for="ubicacion_partido" class="block text-sm font-medium text-gray-300 mb-2">Ubicación (Opcional)</label>
+                                <select name="ubicacion_partido" id="ubicacion_partido" class="block w-full bg-gray-700 border border-gray-600 text-gray-200 rounded-md shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Seleccione una ubicación (si no se elige, se asignará automáticamente si es posible)</option>
+                                    @if(isset($ubicaciones))
+                                        @foreach($ubicaciones as $ubicacion)
+                                            <option value="{{ $ubicacion }}">{{ $ubicacion }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
                             </div>
                         </div>
 

@@ -104,7 +104,13 @@ class PartidoController extends Controller
     public function create(Campeonato $campeonato)
     {
         $equipos = $campeonato->equipos;
-        return view('partidos.create', compact('campeonato', 'equipos'));
+
+        // Obtener ubicaciones únicas de los equipos y del campeonato
+        $ubicacionesEquipos = $equipos->pluck('cancha_direccion')->filter();
+        $ubicacionCampeonato = $campeonato->cancha_unica_direccion ? collect([$campeonato->cancha_unica_direccion]) : collect();
+        $ubicaciones = $ubicacionesEquipos->merge($ubicacionCampeonato)->unique()->sort();
+
+        return view('partidos.create', compact('campeonato', 'equipos', 'ubicaciones'));
     }
 
     /**
@@ -118,11 +124,19 @@ class PartidoController extends Controller
         $request->validate([
             'equipo_local_id' => 'required|exists:equipos,id',
             'equipo_visitante_id' => 'required|exists:equipos,id|different:equipo_local_id',
-            'fecha_partido' => 'required|date',
+            'fecha_partido' => 'nullable|date',
             'jornada' => 'required|integer|min:1',
+            'ubicacion_partido' => 'nullable|string|max:255',
         ]);
 
-        $partido = new Partido($request->all());
+        $data = $request->all();
+
+        // Si no se proporciona una fecha, usar la fecha y hora actual como valor predeterminado
+        if (empty($data['fecha_partido'])) {
+            $data['fecha_partido'] = now();
+        }
+
+        $partido = new Partido($data);
         $partido->campeonato_id = $campeonato->id;
         $partido->save();
 
