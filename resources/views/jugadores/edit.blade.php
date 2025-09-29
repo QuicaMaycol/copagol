@@ -8,7 +8,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <!-- Columna Izquierda: Tarjeta de Jugador -->
                     <div class="md:col-span-1 space-y-6">
-                        <div class="bg-white rounded-lg shadow-lg p-6" x-data="{ imagePreview: '{{ $jugador->imagen_url ?: 'https://static.photos/people/200x200/' . $jugador->id }}' }">
+                        <div class="bg-white rounded-lg shadow-lg p-6" x-data="{ imagePreview: '{{ $jugador->imagen_path ? asset('storage/' . $jugador->imagen_path) : asset('img/logo.png') }}' }">
                             <div class="flex flex-col items-center">
                                 <!-- Vista Previa de Imagen -->
                                 <div class="w-40 h-40 rounded-full bg-gray-200 mb-4 flex items-center justify-center overflow-hidden border-4 border-gray-300">
@@ -38,7 +38,7 @@
                         <div class="bg-white rounded-lg shadow-lg p-6 text-center">
                             <h4 class="font-semibold text-gray-800 mb-2">Equipo Actual</h4>
                             <div class="flex items-center justify-center">
-                                <img src="{{ $equipo->imagen_url ?: 'http://static.photos/sport/40x40/' . ($equipo->id % 10) }}" alt="Escudo del equipo" class="w-8 h-8 rounded-full mr-3">
+                                <img src="{{ $equipo->imagen_path ? asset('storage/' . $equipo->imagen_path) : asset('img/logo.png') }}" alt="Escudo del equipo" class="w-8 h-8 rounded-full mr-3">
                                 <span class="text-gray-700 font-bold">{{ $equipo->nombre }}</span>
                             </div>
                         </div>

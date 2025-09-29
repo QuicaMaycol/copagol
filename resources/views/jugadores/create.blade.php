@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    <form method="POST" action="{{ route('jugadores.store', ['equipo' => $equipo->id]) }}">
+                    <form method="POST" action="{{ route('jugadores.store', ['equipo' => $equipo->id]) }}" enctype="multipart/form-data">
                         @csrf
 
                         <!-- Nombre -->
@@ -89,12 +89,11 @@
                             <x-input-error :messages="$errors->get('posicion')" class="mt-2" />
                         </div>
 
-                        <!-- Imagen URL -->
+                        <!-- Imagen del Jugador -->
                         <div class="mt-4">
-                            <x-input-label for="imagen_url" :value="__('URL de la Imagen de Perfil')" />
-                            <x-text-input id="imagen_url" class="block mt-1 w-full" type="url" name="imagen_url" :value="old('imagen_url')" />
-                            <p class="mt-2 text-sm text-gray-500">Pega la URL de una imagen de Google Drive, Dropbox, o cualquier servicio de alojamiento de imágenes.</p>
-                            <x-input-error :messages="$errors->get('imagen_url')" class="mt-2" />
+                            <x-input-label for="imagen_jugador" :value="__('Foto de Perfil')" />
+                            <x-text-input id="imagen_jugador" class="block mt-1 w-full" type="file" name="imagen_jugador" />
+                            <x-input-error :messages="$errors->get('imagen_jugador')" class="mt-2" />
                         </div>
 
                         <!-- Fecha de Nacimiento -->

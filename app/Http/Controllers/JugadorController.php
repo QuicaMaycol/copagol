@@ -43,10 +43,17 @@ class JugadorController extends Controller
             'numero_camiseta' => 'nullable|integer|min:1',
             'posicion' => 'nullable|string|max:255',
             'fecha_nacimiento' => 'required|date',
-            'imagen_url' => 'nullable|url',
+            'imagen_jugador' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Changed from imagen_url
         ]);
 
+        // Create player instance without the image
         $jugador = new Jugador($validatedData);
+
+        // Handle image upload
+        if ($request->hasFile('imagen_jugador')) {
+            $jugador->imagen_path = $request->file('imagen_jugador')->store('jugadores', 'public');
+        }
+
         $equipo->jugadores()->save($jugador);
 
         return Redirect::route('equipos.show', $equipo)->with('success', 'Jugador registrado con éxito.');
@@ -57,6 +64,8 @@ class JugadorController extends Controller
      */
     public function show(Equipo $equipo, Jugador $jugador)
     {
+        $this->authorize('view', $jugador);
+
         // Ensure the player belongs to the team
         if ($jugador->equipo_id !== $equipo->id) {
             abort(404);
@@ -109,7 +118,7 @@ class JugadorController extends Controller
         $rules = array_merge($rules, [
             'numero_camiseta' => 'nullable|integer|min:1',
             'posicion' => 'nullable|string|max:255',
-            'imagen_jugador' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Changed from imagen_url to imagen_jugador
+            'imagen_jugador' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Aumentado a 8MB
         ]);
 
         $updateData = $request->validate($rules);

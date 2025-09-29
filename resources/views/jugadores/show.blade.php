@@ -1,6 +1,6 @@
 <div class="p-6">
     <div class="flex items-center">
-        <img src="{{ $jugador->imagen_url ?? 'http://static.photos/people/150x150/' . $jugador->id }}" alt="{{ $jugador->nombre }} {{ $jugador->apellido }}" class="w-36 h-36 rounded-full object-cover mb-4 border-4 border-blue-500 shadow-lg">
+        <img src="{{ $jugador->imagen_path ? asset('storage/' . $jugador->imagen_path) : asset('img/logo.png') }}" alt="{{ $jugador->nombre }} {{ $jugador->apellido }}" class="w-36 h-36 rounded-full object-cover mb-4 border-4 border-blue-500 shadow-lg">
         <div class="ml-4">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Detalles del Jugador</h3>
             <p class="text-gray-600"><strong>Nombre Completo:</strong> {{ $jugador->nombre }} {{ $jugador->apellido }}</p>
