@@ -11,6 +11,9 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- Cropper.js CSS -->
+        <link rel="stylesheet" href="{{ asset('css/cropper.css') }}">
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -39,5 +42,10 @@
         @include('components.error-modal')
 
         @stack('scripts')
+
+        <!-- Botón Flotante de Actualizar para Móviles -->
+        <button onclick="window.location.reload()" class="fixed bottom-5 right-5 z-50 w-14 h-14 bg-blue-600 rounded-full shadow-lg flex items-center justify-center text-white md:hidden hover:bg-blue-700 active:scale-95 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-cw"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+        </button>
     </body>
 </html>

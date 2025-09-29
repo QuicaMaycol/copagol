@@ -174,7 +174,7 @@ class EquipoController extends Controller
         $validatedData = $request->validate([
             'nombre' => 'sometimes|required|string|max:255',
             'descripcion' => 'nullable|string',
-            'imagen_equipo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'imagen_equipo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Aumentado a 8MB
         ]);
 
         // Handle image upload
@@ -204,7 +204,7 @@ class EquipoController extends Controller
         $this->authorize('update', $equipo);
 
         $request->validate([
-            'imagen_equipo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
+            'imagen_equipo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Aumentado a 8MB
         ]);
 
         if ($request->hasFile('imagen_equipo')) {
