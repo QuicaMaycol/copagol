@@ -149,6 +149,7 @@ class EquipoController extends Controller
                   ->orWhere('equipo_visitante_id', $equipo->id);
         })
         ->where('estado', 'pendiente') // Assuming 'pendiente' is the status for upcoming matches
+        ->where('fecha_partido', '>=', now()) // Get matches from now onwards
         ->orderBy('fecha_partido')
         ->first();
 
