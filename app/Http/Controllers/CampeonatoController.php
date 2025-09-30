@@ -310,7 +310,7 @@ class CampeonatoController extends Controller
 
         $validatedData = $request->validate([
             'nombre_torneo' => 'required|string|max:255',
-            'imagen_campeonato' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
+            'imagen_campeonato' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Aumentado a 8MB
             'equipos_max' => 'required|integer|min:2',
             'jugadores_por_equipo_max' => 'required|integer|min:1',
             'tipo_futbol' => 'required|in:5,7,11',
@@ -366,7 +366,7 @@ class CampeonatoController extends Controller
         $this->authorize('manage-campeonato', $campeonato);
 
         $request->validate([
-            'imagen_campeonato' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
+            'imagen_campeonato' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Aumentado a 8MB
         ]);
 
         if ($request->hasFile('imagen_campeonato')) {

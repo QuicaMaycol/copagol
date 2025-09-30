@@ -125,8 +125,8 @@ class EquipoController extends Controller
         });
 
         $jugadoresEnCapilla = $jugadores->filter(function ($jugador) {
-            // Assuming 5 yellow cards lead to suspension, 4 yellow cards means 'en capilla'
-            return $jugador->tarjetas_amarillas >= 4 && !$jugador->suspendido;
+            // 2 yellow cards lead to suspension, so 1 yellow card means 'en capilla'
+            return $jugador->tarjetas_amarillas == 1 && !$jugador->suspendido;
         });
 
         $jugadoresSuspendidos = $jugadores->filter(function ($jugador) {
@@ -174,7 +174,7 @@ class EquipoController extends Controller
         $validatedData = $request->validate([
             'nombre' => 'sometimes|required|string|max:255',
             'descripcion' => 'nullable|string',
-            'imagen_equipo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'imagen_equipo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Aumentado a 8MB
         ]);
 
         // Handle image upload
@@ -204,7 +204,7 @@ class EquipoController extends Controller
         $this->authorize('update', $equipo);
 
         $request->validate([
-            'imagen_equipo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
+            'imagen_equipo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:8192', // Aumentado a 8MB
         ]);
 
         if ($request->hasFile('imagen_equipo')) {

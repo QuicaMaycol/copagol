@@ -1,10 +1,12 @@
 import './bootstrap';
 
-import Alpine from 'alpinejs/dist/module.esm.js';
+import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
 import feather from 'feather-icons';
+import Cropper from 'cropperjs';
 
 window.Alpine = Alpine;
+window.Cropper = Cropper; // Make Cropper globally available
 
 Alpine.plugin(collapse);
 Alpine.start();

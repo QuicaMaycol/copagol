@@ -66,4 +66,19 @@ class Jugador extends Model implements Auditable
         }
         return null;
     }
+
+    /**
+     * Get the player's initials from their name and last name.
+     */
+    public function getInitialsAttribute()
+    {
+        $nombre = $this->nombre ?? '';
+        $apellido = $this->apellido ?? '';
+        if (!empty($nombre) && !empty($apellido)) {
+            return strtoupper(substr($nombre, 0, 1) . substr($apellido, 0, 1));
+        } elseif (!empty($nombre)) {
+            return strtoupper(substr($nombre, 0, 2));
+        }
+        return '??';
+    }
 }

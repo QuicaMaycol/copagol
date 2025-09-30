@@ -35,96 +35,110 @@
         </div>
 
         <!-- Players Grid Section -->
-        <section class="mb-12">
-            <h2 class="text-xl md:text-2xl font-bold text-copa-blue-900 mb-6">Plantilla de Jugadores</h2>
-            @if($canManage && $equipo->campeonato->registrations_open)
-            <div class="mb-4">
-                <a href="{{ route('jugadores.create', ['equipo' => $equipo->id]) }}" class="inline-flex items-center px-4 py-2 bg-copa-blue-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-copa-blue-900 active:bg-copa-blue-900 focus:outline-none focus:border-copa-blue-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                    <i data-feather="plus" class="w-4 h-4 mr-2"></i>
-                    Agregar Jugadores
-                </a>
+        <section class="mb-12" x-data="{ open: window.innerWidth >= 768 }" @resize.window="open = window.innerWidth >= 768">
+            <div @click="open = !open" class="flex justify-between items-center cursor-pointer bg-gray-100 p-4 rounded-lg shadow hover:bg-gray-200 transition mb-4">
+                <h2 class="text-xl md:text-2xl font-bold text-copa-blue-900">Plantilla de Jugadores ({{ $jugadores->count() }})</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-copa-blue-900 transition-transform duration-300" :class="{ 'rotate-180': open }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </div>
-            @elseif($canManage && !$equipo->campeonato->registrations_open)
-            <div class="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-                <p class="font-semibold">Registros Cerrados</p>
-                <p class="text-sm">El período de traspasos y registros para este campeonato ha finalizado.</p>
-            </div>
-            @endif
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                @foreach($jugadores as $jugador)
-                    @if($canManage && $equipo->campeonato->registrations_open)
-                        <a href="{{ route('equipos.jugadores.edit', ['equipo' => $equipo->id, 'jugador' => $jugador->id]) }}" class="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-xl cursor-pointer block" data-aos="zoom-in">
-                    @else
-                        <div class="bg-white rounded-lg shadow-md overflow-hidden block" data-aos="zoom-in">
-                    @endif
-                        <div class="p-4 flex items-start justify-between">
-                            <div>
-                                <div class="flex items-center mb-2">
-                                    <span class="bg-copa-blue-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-2">
-                                        {{ $jugador->numero_camiseta ?? '-' }}
-                                    </span>
-                                    <h3 class="font-semibold text-lg text-gray-900">{{ $jugador->nombre }} {{ $jugador->apellido }}</h3>
+
+            <div x-show="open" x-collapse.duration.500ms>
+                @if($canManage && $equipo->campeonato->registrations_open)
+                <div class="mb-4">
+                    <a href="{{ route('jugadores.create', ['equipo' => $equipo->id]) }}" class="inline-flex items-center px-4 py-2 bg-copa-blue-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-copa-blue-900 active:bg-copa-blue-900 focus:outline-none focus:border-copa-blue-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                        Agregar Jugadores
+                    </a>
+                </div>
+                @elseif($canManage && !$equipo->campeonato->registrations_open)
+                <div class="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg">
+                    <p class="font-semibold">Registros Cerrados</p>
+                    <p class="text-sm">El período de traspasos y registros para este campeonato ha finalizado.</p>
+                </div>
+                @endif
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    @forelse($jugadores as $jugador)
+                        @if($canManage && $equipo->campeonato->registrations_open)
+                            <a href="{{ route('equipos.jugadores.edit', ['equipo' => $equipo->id, 'jugador' => $jugador->id]) }}" class="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-xl cursor-pointer block" data-aos="zoom-in">
+                        @else
+                            <div class="bg-white rounded-lg shadow-md overflow-hidden block" data-aos="zoom-in">
+                        @endif
+                                <div class="p-4 flex items-start justify-between">
+                                    <div>
+                                        <div class="flex items-center mb-2">
+                                            <span class="bg-copa-blue-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-2">
+                                                {{ $jugador->numero_camiseta ?? '-' }}
+                                            </span>
+                                            <h3 class="font-semibold text-lg text-gray-900">{{ $jugador->nombre }} {{ $jugador->apellido }}</h3>
+                                        </div>
+                                        <p class="text-gray-600 text-sm mb-2">
+                                            DNI: {{ $jugador->dni }}
+                                        </p>
+                                        <p class="text-gray-600 text-sm">
+                                            Posición: {{ $jugador->posicion ?? 'N/A' }}
+                                        </p>
+                                        @if($jugador->fecha_nacimiento)
+                                        <p class="text-gray-600 text-sm">
+                                            Edad: {{ $jugador->edad }} años
+                                        </p>
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-col items-end">
+                                        @if($jugador->imagen_url)
+                                            <img src="{{ $jugador->imagen_url }}" alt="{{ $jugador->nombre }} {{ $jugador->apellido }}" class="w-14 h-14 rounded-md object-cover">
+                                        @else
+                                            <div class="w-14 h-14 rounded-md bg-gray-200 flex items-center justify-center">
+                                                <span class="text-xl font-bold text-gray-500">{{ $jugador->initials }}</span>
+                                            </div>
+                                        @endif
+                                        @if(Auth::user()->role === 'admin' || Auth::user()->id === $equipo->campeonato->user_id)
+                                            <form action="{{ route('equipos.jugadores.destroy', ['equipo' => $equipo->id, 'jugador' => $jugador->id]) }}" method="POST" class="mt-2" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a este jugador? Esta acción no se puede deshacer.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-semibold">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </div>
-                                <p class="text-gray-600 text-sm mb-2">
-                                    DNI: {{ $jugador->dni }}
-                                </p>
-                                <p class="text-gray-600 text-sm">
-                                    Posición: {{ $jugador->posicion ?? 'N/A' }}
-                                </p>
-                                @if($jugador->fecha_nacimiento)
-                                <p class="text-gray-600 text-sm">
-                                    Edad: {{ $jugador->edad }} años
-                                </p>
-                                @endif
-                            </div>
-                            <div class="flex flex-col items-end">
-                                <img src="{{ $jugador->imagen_url ?? 'http://static.photos/people/80x80/' . $jugador->id }}" alt="{{ $jugador->nombre }} {{ $jugador->apellido }}" class="w-14 h-14 rounded-md object-cover">
-                                @if(Auth::user()->role === 'admin' || Auth::user()->id === $equipo->campeonato->user_id)
-                                    <form action="{{ route('equipos.jugadores.destroy', ['equipo' => $equipo->id, 'jugador' => $jugador->id]) }}" method="POST" class="mt-2" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a este jugador? Esta acción no se puede deshacer.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-semibold">
-                                            Eliminar
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <!-- Player Stats -->
-                        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200">
-                            <div class="flex justify-between mb-2">
-                                <div class="flex items-center">
-                                    <i data-feather="target" class="w-4 h-4 mr-1 text-copa-orange"></i>
-                                    <span class="text-sm">Goles: {{ $jugador->goles }}</span>
+                                
+                                <!-- Player Stats -->
+                                <div class="bg-gray-50 px-4 py-3 border-t border-gray-200">
+                                    <div class="flex justify-between mb-2">
+                                        <div class="flex items-center">
+                                            <i data-feather="target" class="w-4 h-4 mr-1 text-copa-orange"></i>
+                                            <span class="text-sm">Goles: {{ $jugador->goles }}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i data-feather="alert-triangle" class="w-4 h-4 mr-1 text-copa-orange"></i>
+                                            <span class="text-sm">Amarillas: {{ $jugador->tarjetas_amarillas }}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i data-feather="x-octagon" class="w-4 h-4 mr-1 text-copa-red"></i>
+                                            <span class="text-sm">Rojas: {{ $jugador->tarjetas_rojas }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Suspension Badge -->
+                                    @if($jugador->suspendido)
+                                    <div class="mt-2">
+                                        <span class="bg-copa-red text-white px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
+                                            <i data-feather="alert-circle" class="w-3 h-3 mr-1"></i>
+                                            Suspendido
+                                        </span>
+                                    </div>
+                                    @endif
                                 </div>
-                                <div class="flex items-center">
-                                    <i data-feather="alert-triangle" class="w-4 h-4 mr-1 text-copa-orange"></i>
-                                    <span class="text-sm">Amarillas: {{ $jugador->tarjetas_amarillas }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i data-feather="x-octagon" class="w-4 h-4 mr-1 text-copa-red"></i>
-                                    <span class="text-sm">Rojas: {{ $jugador->tarjetas_rojas }}</span>
-                                </div>
+                        @if($canManage && $equipo->campeonato->registrations_open)
+                            </a>
+                        @else
                             </div>
-                            
-                            <!-- Suspension Badge -->
-                            @if($jugador->suspendido)
-                            <div class="mt-2">
-                                <span class="bg-copa-red text-white px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
-                                    <i data-feather="alert-circle" class="w-3 h-3 mr-1"></i>
-                                    Suspendido
-                                </span>
-                            </div>
-                            @endif
-                        </div>
-                    @if($canManage && $equipo->campeonato->registrations_open)
-                        </a>
-                    @else
-                        </div>
-                    @endif
-                @endforeach
+                        @endif
+                    @empty
+                        <p class="text-gray-600 p-4">No hay jugadores registrados en este equipo todavía.</p>
+                    @endforelse
+                </div>
             </div>
         </section>
 
@@ -145,7 +159,13 @@
                                 @foreach($jugadoresSuspendidos as $jugador)
                                     <div class="flex items-center justify-between p-2 bg-red-50 rounded-md">
                                         <div class="flex items-center">
-                                            <img src="{{ $jugador->imagen_url ?? 'http://static.photos/people/30x30/' . $jugador->id }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @if($jugador->imagen_url)
+                                                <img src="{{ $jugador->imagen_url }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @else
+                                                <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                                                    <span class="text-xs font-bold text-gray-500">{{ $jugador->initials }}</span>
+                                                </div>
+                                            @endif
                                             <span class="text-sm font-medium">{{ $jugador->nombre }} {{ $jugador->apellido }}</span>
                                         </div>
                                         <span class="text-xs font-semibold text-red-700">{{ $jugador->suspension_matches }} partido(s)</span>
@@ -165,7 +185,13 @@
                                 @foreach($jugadoresConRojas as $jugador)
                                     <div class="flex items-center justify-between p-2 bg-red-50 rounded-md">
                                         <div class="flex items-center">
-                                            <img src="{{ $jugador->imagen_url ?? 'http://static.photos/people/30x30/' . $jugador->id }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @if($jugador->imagen_url)
+                                                <img src="{{ $jugador->imagen_url }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @else
+                                                <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                                                    <span class="text-xs font-bold text-gray-500">{{ $jugador->initials }}</span>
+                                                </div>
+                                            @endif
                                             <span class="text-sm font-medium">{{ $jugador->nombre }} {{ $jugador->apellido }}</span>
                                         </div>
                                         <span class="text-xs font-semibold text-red-700">{{ $jugador->tarjetas_rojas }} Roja(s)</span>
@@ -185,7 +211,13 @@
                                 @foreach($jugadoresEnCapilla as $jugador)
                                     <div class="flex items-center justify-between p-2 bg-yellow-50 rounded-md">
                                         <div class="flex items-center">
-                                            <img src="{{ $jugador->imagen_url ?? 'http://static.photos/people/30x30/' . $jugador->id }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @if($jugador->imagen_url)
+                                                <img src="{{ $jugador->imagen_url }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @else
+                                                <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                                                    <span class="text-xs font-bold text-gray-500">{{ $jugador->initials }}</span>
+                                                </div>
+                                            @endif
                                             <span class="text-sm font-medium">{{ $jugador->nombre }} {{ $jugador->apellido }}</span>
                                         </div>
                                         <span class="text-xs font-semibold text-yellow-700">{{ $jugador->tarjetas_amarillas }} Amarilla(s)</span>
@@ -205,7 +237,13 @@
                                 @foreach($goleadores as $jugador)
                                     <div class="flex items-center justify-between p-2 bg-green-50 rounded-md">
                                         <div class="flex items-center">
-                                            <img src="{{ $jugador->imagen_url ?? 'http://static.photos/people/30x30/' . $jugador->id }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @if($jugador->imagen_url)
+                                                <img src="{{ $jugador->imagen_url }}" alt="{{ $jugador->nombre }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                                            @else
+                                                <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                                                    <span class="text-xs font-bold text-gray-500">{{ $jugador->initials }}</span>
+                                                </div>
+                                            @endif
                                             <span class="text-sm font-medium">#{{ $jugador->goleador_rank }} {{ $jugador->nombre }} {{ $jugador->apellido }}</span>
                                         </div>
                                         <span class="text-xs font-semibold text-green-700">{{ $jugador->goles }} Goles</span>
@@ -303,68 +341,7 @@
         </div>
     </main>
 
-    <!-- Player Details Modal -->
-    <div x-data="{ showPlayerModal: false, player: {} }"
-         @show-player-modal.window="showPlayerModal = true; player = $event.detail"
-         x-show="showPlayerModal"
-         x-transition:enter="ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto"
-         aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Background overlay -->
-            <div x-show="showPlayerModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 x-description="Background overlay, show/hide based on modal state." class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showPlayerModal = false" aria-hidden="true"></div>
 
-            <!-- This element is to trick the browser into centering the modal contents. -->
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div x-show="showPlayerModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-description="Modal panel, show/hide based on modal state."
-                 class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title" x-text="player.nombre + ' ' + player.apellido"></h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500"><strong>DNI:</strong> <span x-text="player.dni"></span></p>
-                                <p class="text-sm text-gray-500"><strong>Número de Camiseta:</strong> <span x-text="player.numero_camiseta"></span></p>
-                                <p class="text-sm text-gray-500"><strong>Posición:</strong> <span x-text="player.posicion"></span></p>
-                                {{-- Add more player details here as needed --}}
-                                <p class="text-sm text-gray-500"><strong>Goles:</strong> <span x-text="player.goles"></span></p>
-                                <p class="text-sm text-gray-500"><strong>Tarjetas Amarillas:</strong> <span x-text="player.tarjetas_amarillas"></span></p>
-                                <p class="text-sm text-gray-500"><strong>Tarjetas Rojas:</strong> <span x-text="player.tarjetas_rojas"></span></p>
-                                <p class="text-sm text-gray-500"><strong>Suspendido:</strong> <span x-text="player.suspendido ? 'Sí' : 'No'"></span></p>
-                                <p class="text-sm text-gray-500"><strong>Valoración General:</strong> <span x-text="player.valoracion_general"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <a :href="'{{ route('equipos.jugadores.edit', ['equipo' => $equipo->id, 'jugador' => '__JUGADOR_ID__']) }}'.replace('__JUGADOR_ID__', player.id)"
-                       class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Editar
-                    </a>
-                    <form :action="'{{ route('equipos.jugadores.destroy', ['equipo' => $equipo->id, 'jugador' => '__JUGADOR_ID__']) }}'.replace('__JUGADOR_ID__', player.id)" method="POST" class="sm:ml-3 sm:w-auto" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a este jugador?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto sm:text-sm">
-                            Eliminar
-                        </button>
-                    </form>
-                    <button type="button" @click="showPlayerModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Cerrar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Footer -->
     <footer class="bg-copa-blue-900 text-gray-300 py-6">
