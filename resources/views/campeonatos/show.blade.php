@@ -17,6 +17,10 @@
                                 Compartir
                             </button>
                             @endcan
+                            <a href="{{ route('campeonatos.imprimirPadron', $campeonato) }}" target="_blank" class="flex items-center justify-center bg-gray-600 hover:bg-gray-500 text-white px-3 py-2 rounded-md transition-colors duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                                Imprimir Padrón
+                            </a>
                             
                             @if($campeonato->reglamento_tipo)
                             <button @click="$dispatch('open-reglamento-modal')" class="flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-md transition-colors duration-300">
@@ -63,6 +67,9 @@
                                     Compartir
                                 </button>
                                 @endcan
+                                <a href="{{ route('campeonatos.imprimirPadron', $campeonato) }}" target="_blank" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Imprimir Padrón
+                                </a>
                                 
                                 @if($campeonato->reglamento_tipo)
                                 <button @click="$dispatch('open-reglamento-modal'); open = false;" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

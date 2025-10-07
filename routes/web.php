@@ -17,6 +17,7 @@ Route::get('/', function () {
 });
 
 Route::get('/campeonatos/{campeonato}/compartir', [CampeonatoController::class, 'publicShare'])->name('campeonatos.public.share');
+Route::get('/campeonatos/{campeonato}/imprimir-padron', [CampeonatoController::class, 'imprimirPadron'])->name('campeonatos.imprimirPadron');
 Route::get('/partidos/{partido}/public', [PartidoController::class, 'publicShow'])->name('partidos.public_show');
 Route::get('/equipos/{equipo}/public', [EquipoController::class, 'publicShow'])->name('equipos.public_show');
 

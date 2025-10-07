@@ -998,4 +998,18 @@ class CampeonatoController extends Controller
             ->orderBy('id')
             ->first();
     }
+
+    public function imprimirPadron(Campeonato $campeonato)
+    {
+        // Cargar las relaciones necesarias: equipos y jugadores de cada equipo.
+        $campeonato->load('equipos.jugadores');
+
+        // Crear el PDF
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('campeonatos.pdf.padron', compact('campeonato'));
+        $pdf->setPaper('a4', 'landscape'); // Hoja horizontal
+
+        // Devolver el PDF para ser mostrado en el navegador
+        return $pdf->stream('padron-de-jugadores-' . $campeonato->nombre_torneo . '.pdf');
+    }
 }

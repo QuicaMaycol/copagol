@@ -21,6 +21,12 @@
             <div class="text-center mb-8 pt-8">
                 <h1 class="text-4xl font-bold text-white">{{ $campeonato->nombre_campeonato }}</h1>
                 <p class="text-md text-gray-400">Organizado por {{ $campeonato->organizador->name }}</p>
+                <div class="mt-4">
+                    <a href="{{ route('campeonatos.imprimirPadron', $campeonato) }}" target="_blank" class="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                        Imprimir Padrón de Jugadores
+                    </a>
+                </div>
             </div>
 
             <!-- Featured Match -->
