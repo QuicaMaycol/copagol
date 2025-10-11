@@ -131,6 +131,37 @@ class CampeonatoController extends Controller
         return $fairPlayData->sortByDesc('puntos');
     }
 
+    private function getSancionadosData(Campeonato $campeonato)
+    {
+        $jugadores = \App\Models\Jugador::whereHas('equipo', function ($query) use ($campeonato) {
+            $query->where('campeonato_id', $campeonato->id);
+        })
+        ->with('equipo')
+        ->get();
+
+        $sancionadosPorRoja = $jugadores->filter(function ($jugador) {
+            // Jugador tiene tarjeta roja y está actualmente marcado como suspendido
+            return $jugador->tarjetas_rojas > 0 && $jugador->suspendido;
+        });
+
+        $sancionadosPorAmarillas = $jugadores->filter(function ($jugador) {
+            // Jugador está suspendido pero no tiene tarjetas rojas, implicando acumulación de amarillas
+            return $jugador->suspendido && $jugador->tarjetas_rojas == 0;
+        });
+
+        $apercibidos = $jugadores->filter(function ($jugador) {
+            // El jugador tiene un número impar de tarjetas amarillas y no está actualmente suspendido
+            // Se asume que la suspensión es cada 2 amarillas.
+            return $jugador->tarjetas_amarillas > 0 && ($jugador->tarjetas_amarillas % 2 != 0) && !$jugador->suspendido;
+        });
+
+        return [
+            'sancionadosPorRoja' => $sancionadosPorRoja,
+            'sancionadosPorAmarillas' => $sancionadosPorAmarillas,
+            'apercibidos' => $apercibidos,
+        ];
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -182,31 +213,6 @@ class CampeonatoController extends Controller
 
         $campeonato->load('organizador', 'delegates', 'partidos.equipoLocal', 'partidos.equipoVisitante', 'fases'); // Load organizador, delegates, matches, and phases. Removed .jugadores from partidos relations as it's not directly used here and can be heavy.
 
-        // Get all suspended players from all teams in this championship using the helper method
-        $suspendedPlayers = PartidoController::generarListaSuspendidos($campeonato);
-
-        // Prepare a list of suspended players for each match
-        $suspendedPlayersByMatch = [];
-        foreach ($campeonato->partidos as $partido) {
-            // Ensure equipoLocal and equipoVisitante are loaded before accessing jugadores
-            $partido->loadMissing('equipoLocal.jugadores', 'equipoVisitante.jugadores');
-
-            $localSuspended = $partido->equipoLocal ? $partido->equipoLocal->jugadores->where('suspendido', true) : collect();
-            $visitorSuspended = $partido->equipoVisitante ? $partido->equipoVisitante->jugadores->where('suspendido', true) : collect();
-            $allSuspended = $localSuspended->concat($visitorSuspended);
-
-            if ($allSuspended->isNotEmpty()) {
-                $suspendedPlayersByMatch[$partido->id] = $allSuspended->values()->map(function ($player) {
-                    return [
-                        'id' => $player->id,
-                        'nombre' => $player->nombre,
-                        'apellido' => $player->apellido,
-                        'suspension_matches' => $player->suspension_matches,
-                    ];
-                });
-            }
-        }
-
         // Calculate standings
         $standings = $campeonato->getStandings();
         
@@ -215,6 +221,9 @@ class CampeonatoController extends Controller
 
         // Get Fair Play data
         $fairPlay = $this->getFairPlay($campeonato);
+
+        // Get Sancionados data
+        $sancionadosData = $this->getSancionadosData($campeonato);
 
         // New progress bar logic based on matches
         $partidos = $campeonato->partidos->sortBy('fecha_partido');
@@ -275,11 +284,10 @@ class CampeonatoController extends Controller
 
         return view('campeonatos.show', compact(
             'campeonato', 
-            'suspendedPlayers', 
+            'sancionadosData', 
             'standings', 
             'fases', 
             'progressPercentage', 
-            'suspendedPlayersByMatch',
             'totalPartidos',
             'partidosFinalizados',
             'fechaInicio',
