@@ -18,7 +18,7 @@
                 <tr class="{{ $isSuspended ? 'opacity-40' : '' }}">
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="text-sm font-medium text-gray-200">{{ $jugador->nombre }} {{ $jugador->apellido }}</div>
+                            <div class="text-sm font-medium text-gray-200">[{{ $jugador->numero_camiseta }}] {{ $jugador->nombre }} {{ $jugador->apellido }}</div>
                             @if($isSuspended)
                                 <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-500 text-white">Suspendido</span>
                             @endif
