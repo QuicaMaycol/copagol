@@ -107,8 +107,13 @@ class Campeonato extends Model implements Auditable
             ];
         }
 
-        // Process finished matches
-        $finishedMatches = $this->partidos->where('estado', 'finalizado');
+        // Process finished matches (exclude playoffs/eliminatoria)
+        $finishedMatches = $this->partidos
+            ->where('estado', 'finalizado')
+            ->filter(function ($partido) {
+                // Include if match has no phase (group stage calendar) or phase type is 'grupos'
+                return !$partido->fase || $partido->fase->tipo === 'grupos';
+            });
 
         foreach ($finishedMatches as $partido) {
             $localId = $partido->equipo_local_id;

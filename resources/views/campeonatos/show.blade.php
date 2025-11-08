@@ -224,6 +224,9 @@
                 <button @click="activeTab = 'partidos'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'partidos', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'partidos' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
                     Partidos
                 </button>
+                <button @click="activeTab = 'playoffs'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'playoffs', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'playoffs' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
+                    Playoffs
+                </button>
                 <button @click="activeTab = 'goleadores'" :class="{ 'border-[#3B82F6] text-[#3B82F6] font-bold': activeTab === 'goleadores', 'border-transparent text-gray-500 hover:text-gray-700': activeTab !== 'goleadores' }" class="whitespace-nowrap py-3 px-2 text-sm sm:px-4 sm:text-base border-b-2 transition-colors duration-300">
                     Goleadores
                 </button>
@@ -355,9 +358,25 @@
 
                     <div class="py-6">
                         <div x-show="subTab === 'proximos'">
-                            @if(isset($partidosProximos) && $partidosProximos->count() > 0)
+                            @php
+                                // Preparar colecciones separadas
+                                $proximosLiga = collect();
+                                if (isset($partidosProximos) && $partidosProximos->count() > 0) {
+                                    foreach ($partidosProximos as $jornada => $partidosEnJornada) {
+                                        $soloLiga = $partidosEnJornada->filter(function($p){ return !$p->fase || $p->fase->tipo === 'grupos'; });
+                                        if ($soloLiga->count() > 0) {
+                                            $proximosLiga[$jornada] = $soloLiga;
+                                        }
+                                    }
+                                }
+                                $playoffFases = isset($fases) ? $fases->where('tipo', 'eliminatoria')->sortBy('orden') : collect();
+                            @endphp
+
+                            {{-- Fase de Grupos: Próximas Jornadas --}}
+                            @if($proximosLiga->count() > 0)
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Fase de Grupos: Próximas Jornadas</h3>
                             <div class="space-y-8">
-                                @foreach($partidosProximos as $jornada => $partidosEnJornada)
+                                @foreach($proximosLiga as $jornada => $partidosEnJornada)
                                     @php
                                         $teamsInJornada = [];
                                         $duplicateTeamsInJornada = [];
@@ -437,19 +456,105 @@
                                 @endforeach
                             </div>
                             @else
-                            <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4m0 16l-4-4m4 4l4-4M6 20h12"/></svg>
-                                <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No hay partidos próximos</h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Genera el calendario para ver los próximos partidos.</p>
-                            </div>
+                            {{-- Oculto: este aviso se muestra al final si tampoco hay playoffs próximos --}}
+                            @endif
+
+                            {{-- Fase Eliminatoria: Próximos --}}
+                            @php
+                                $totalProximosPlayoffs = 0;
+                                if ($playoffFases->count() > 0) {
+                                    foreach ($playoffFases as $fase) {
+                                        $totalProximosPlayoffs += $fase->partidos->where('estado', '!=', 'finalizado')->count();
+                                    }
+                                }
+                            @endphp
+                            @if($totalProximosPlayoffs > 0)
+                                <div class="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                                        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Fase Eliminatoria: Próximos Enfrentamientos</h3>
+                                    </div>
+                                    <div class="space-y-6">
+                                        @foreach($playoffFases as $fase)
+                                            @php
+                                                $partidosFase = $fase->partidos->where('estado', '!=', 'finalizado')->sortBy('fecha_partido');
+                                            @endphp
+                                            @if($partidosFase->count() > 0)
+                                            <div>
+                                                <div class="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-md flex items-center justify-between">
+                                                    <div class="flex items-center space-x-3">
+                                                        <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $fase->nombre }}</h4>
+                                                        <span class="text-xs px-2 py-1 rounded-full {{ $fase->estado === 'finalizada' ? 'bg-green-100 text-green-800' : ($fase->estado === 'activa' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') }}">{{ ucfirst($fase->estado) }}</span>
+                                                    </div>
+                                                    @can('manage-campeonato', $campeonato)
+                                                        <a href="{{ route('campeonatos.fases.show', [$campeonato, $fase]) }}" class="text-sm text-blue-600 hover:text-blue-700">Administrar</a>
+                                                    @endcan
+                                                </div>
+                                                <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                                                    @foreach($partidosFase as $partido)
+                                                    <div id="partido-{{ $partido->id }}" class="px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                        <div class="flex items-center space-x-3 w-2/5">
+                                                            <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoLocal && $partido->equipoLocal->imagen_url ? $partido->equipoLocal->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoLocal)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
+                                                            <span class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}</span>
+                                                        </div>
+                                                        <div class="w-1/5 text-center">
+                                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $partido->fecha_partido ? \Carbon\Carbon::parse($partido->fecha_partido)->format('d/m H:i') : 'Por definir' }}</span>
+                                                            <div class="text-xs text-gray-500">{{ $partido->ubicacion_partido ?: 'Ubicación por definir' }}</div>
+                                                        </div>
+                                                        <div class="flex items-center space-x-3 justify-end w-2/5">
+                                                            <span class="font-medium text-gray-900 dark:text-gray-100 truncate text-right">{{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}</span>
+                                                            <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoVisitante && $partido->equipoVisitante->imagen_url ? $partido->equipoVisitante->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoVisitante)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
+                                                        </div>
+                                                        <div class="flex items-center space-x-2 flex-shrink-0 ml-4">
+                                                            <button @click="getSancionados({{ $partido->id }})" class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-full transition-colors duration-300" title="Ver Sancionados">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                                            </button>
+                                                            @can('manage-campeonato', $campeonato)
+                                                            <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300" title="Editar Partido">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                            </a>
+                                                            <button @click="showDeleteModal = true; deleteUrl = '{{ route('partidos.destroy', $partido) }}'; partidoElementId = 'partido-{{ $partido->id }}';" type="button" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors duration-300" title="Eliminar Partido">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                            </button>
+                                                            @endcan
+                                                        </div>
+                                                    </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($proximosLiga->count() === 0 && $totalProximosPlayoffs === 0)
+                                <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4m0 16l-4-4m4 4l4-4M6 20h12"/></svg>
+                                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No hay próximos partidos</h3>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Se mostrarán aquí cuando sean programados.</p>
+                                </div>
                             @endif
                         </div>
                         
                         <div x-show="subTab === 'resultados'" style="display: none;">
-                            @if(isset($partidosJugados) && count($partidosJugados) > 0)
+                            @php
+                                // Separar resultados de Liga (grupos) y Playoffs (eliminatoria)
+                                $jugadosLiga = collect();
+                                if (isset($partidosJugados) && count($partidosJugados) > 0) {
+                                    foreach ($partidosJugados as $jornada => $partidosEnJornada) {
+                                        $soloLiga = $partidosEnJornada->filter(function($p){ return !$p->fase || $p->fase->tipo === 'grupos'; });
+                                        if ($soloLiga->count() > 0) {
+                                            $jugadosLiga[$jornada] = $soloLiga;
+                                        }
+                                    }
+                                }
+                                $playoffFases = isset($fases) ? $fases->where('tipo', 'eliminatoria')->sortBy('orden') : collect();
+                            @endphp
+                            {{-- Fase de Grupos: Resultados --}}
+                            @if($jugadosLiga->count() > 0)
                             <div class="space-y-4">
-                                @foreach($partidosJugados as $jornada => $partidosEnJornada)
-                                <div class="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md" x-data="{ open: true }">
+                                @foreach($jugadosLiga as $jornada => $partidosEnJornada)
+                                <div class="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md" x-data="{ open: false }">
                                     <div class="flex justify-between items-center mb-4 border-b pb-2 cursor-pointer" @click="open = !open">
                                         <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Jornada {{ $jornada }}</h3>
                                         @if(isset($restingTeamsByJornada[$jornada]))
@@ -459,7 +564,7 @@
                                     </div>
                                     <div class="space-y-4" x-show="open" x-collapse>
                                         @foreach($partidosEnJornada as $partido)
-                                        <div id="partido-{{ $partido->id }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border-l-4 {{ $partido->goles_local > $partido->goles_visitante ? 'border-green-500' : ($partido->goles_local < $partido->goles_visitante ? 'border-red-500' : 'border-yellow-500') }}">
+                                            <div id="partido-{{ $partido->id }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border-l-4 {{ $partido->goles_local > $partido->goles_visitante ? 'border-green-500' : ($partido->goles_local < $partido->goles_visitante ? 'border-red-500' : 'border-yellow-500') }}">
                                             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                                                 <!-- Local Team -->
                                                 <div class="flex items-center space-x-3 w-full sm:w-auto justify-start flex-1">
@@ -490,15 +595,160 @@
                                 </div>
                                 @endforeach
                             </div>
-                            @else
-                            <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4m0 16l-4-4m4 4l4-4M6 20h12"/></svg>
-                                <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No hay resultados de partidos</h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Los resultados se mostrarán aquí una vez que se hayan jugado los partidos.</p>
-                            </div>
+                            @endif
+
+                            {{-- Fase Eliminatoria: Resultados --}}
+                            @php
+                                $totalResultadosPlayoffs = 0;
+                                if ($playoffFases->count() > 0) {
+                                    foreach ($playoffFases as $fase) {
+                                        $totalResultadosPlayoffs += $fase->partidos->where('estado', 'finalizado')->count();
+                                    }
+                                }
+                            @endphp
+                            @if($totalResultadosPlayoffs > 0)
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mt-10 mb-4">Fase Eliminatoria: Resultados</h3>
+                                <div class="space-y-8">
+                                    @foreach($playoffFases as $fase)
+                                        @php
+                                            $partidosFase = $fase->partidos->where('estado', 'finalizado')->sortBy('fecha_partido');
+                                        @endphp
+                                        @if($partidosFase->count() > 0)
+                                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                                <div class="flex items-center space-x-3">
+                                                    <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $fase->nombre }}</h4>
+                                                </div>
+                                                @can('manage-campeonato', $campeonato)
+                                                    <a href="{{ route('campeonatos.fases.show', [$campeonato, $fase]) }}" class="text-sm text-blue-600 hover:text-blue-700">Administrar</a>
+                                                @endcan
+                                            </div>
+                                            <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                                                @foreach($partidosFase as $partido)
+                                                <div class="px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                    <div class="flex items-center space-x-3 w-2/5">
+                                                        <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoLocal && $partido->equipoLocal->imagen_url ? $partido->equipoLocal->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoLocal)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
+                                                        <span class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}</span>
+                                                    </div>
+                                                    <div class="w-1/5 text-center">
+                                                        <span class="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                                            {{ $partido->goles_local ?? 0 }} - {{ $partido->goles_visitante ?? 0 }}
+                                                        </span>
+                                                        <div class="text-xs text-green-600 dark:text-green-400">Final</div>
+                                                        @can('manage-campeonato', $campeonato)
+                                                        <div class="mt-2">
+                                                            <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300 inline-block" title="Editar Partido">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                            </a>
+                                                        </div>
+                                                        @endcan
+                                                    </div>
+                                                    <div class="flex items-center space-x-3 justify-end w-2/5">
+                                                        <span class="font-medium text-gray-900 dark:text-gray-100 truncate text-right">{{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}</span>
+                                                        <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoVisitante && $partido->equipoVisitante->imagen_url ? $partido->equipoVisitante->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoVisitante)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
+                                                    </div>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if($jugadosLiga->count() === 0 && $totalResultadosPlayoffs === 0)
+                                <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4m0 16l-4-4m4 4l4-4M6 20h12"/></svg>
+                                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No hay resultados de partidos</h3>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Se mostrarán aquí una vez finalicen los partidos.</p>
+                                </div>
                             @endif
                         </div>
                     </div>
+                </div>
+
+                <div x-show="activeTab === 'playoffs'">
+                    @php
+                        $playoffFases = isset($fases) ? $fases->where('tipo', 'eliminatoria')->sortBy('orden') : collect();
+                        $totalPlayoffMatches = $playoffFases->reduce(function($carry, $fase){ return $carry + ($fase->partidos ? $fase->partidos->count() : 0); }, 0);
+                    @endphp
+
+                    @if($totalPlayoffMatches > 0)
+                        <div class="space-y-8">
+                            @foreach($playoffFases as $fase)
+                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $fase->nombre }}</h3>
+                                            <span class="text-xs px-2 py-1 rounded-full {{ $fase->estado === 'finalizada' ? 'bg-green-100 text-green-800' : ($fase->estado === 'activa' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') }}">
+                                                {{ ucfirst($fase->estado) }}
+                                            </span>
+                                        </div>
+                                        @can('manage-campeonato', $campeonato)
+                                            <a href="{{ route('campeonatos.fases.show', [$campeonato, $fase]) }}" class="text-sm text-blue-600 hover:text-blue-700">Administrar</a>
+                                        @endcan
+                                    </div>
+                                    @if($fase->partidos && $fase->partidos->count() > 0)
+                                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                                            @foreach($fase->partidos->sortBy('fecha_partido') as $partido)
+                                                <div class="px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                    <!-- Local -->
+                                                    <div class="flex items-center space-x-3 w-1/3">
+                                                        <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoLocal && $partido->equipoLocal->imagen_url ? $partido->equipoLocal->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoLocal)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
+                                                        <span class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}</span>
+                                                    </div>
+                                                    <!-- Marcador / Fecha -->
+                                                    <div class="w-1/3 text-center">
+                                                        @if($partido->estado === 'finalizado')
+                                                            <span class="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                                                {{ $partido->goles_local ?? 0 }} - {{ $partido->goles_visitante ?? 0 }}
+                                                            </span>
+                                                            <div class="text-xs text-green-600 dark:text-green-400">Final</div>
+                                                        @else
+                                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                {{ $partido->fecha_partido ? \Carbon\Carbon::parse($partido->fecha_partido)->format('d/m H:i') : 'Por definir' }}
+                                                            </span>
+                                                            <div class="text-xs text-gray-500">Pendiente</div>
+                                                        @endif
+                                                    </div>
+                                                    <!-- Visitante -->
+                                                    <div class="flex items-center space-x-3 justify-end w-1/3">
+                                                        <span class="font-medium text-gray-900 dark:text-gray-100 truncate text-right">{{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}</span>
+                                                        <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoVisitante && $partido->equipoVisitante->imagen_url ? $partido->equipoVisitante->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoVisitante)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="p-6 text-center text-gray-500 dark:text-gray-400">No hay partidos en esta etapa.</div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                        @can('manage-campeonato', $campeonato)
+                            <div class="mt-6">
+                                <button @click="$dispatch('open-modal', 'create-playoff-phase-modal')" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow">
+                                    Crear nueva jornada de Playoffs
+                                </button>
+                            </div>
+                        @endcan
+                    @else
+                        @can('manage-campeonato', $campeonato)
+                        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                             x-data
+                             @click="$dispatch('open-modal', 'create-playoff-phase-modal')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4m0 16l-4-4m4 4l4-4M6 20h12"/></svg>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Playoffs no Disponibles</h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Haz clic aquí para crear la primera jornada de playoffs.</p>
+                        </div>
+                        @else
+                        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4m0 16l-4-4m4 4l4-4M6 20h12"/></svg>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Playoffs no Disponibles</h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">La fase de playoffs se mostrará una vez que la fase de grupos haya finalizado.</p>
+                        </div>
+                        @endcan
+                    @endif
                 </div>
                 
                 <div x-show="activeTab === 'goleadores'">
@@ -933,6 +1183,40 @@
     </div>
     <x-add-delegate-and-team-modal :campeonato="$campeonato" />
     <x-campeonato-reglamento-modal :campeonato="$campeonato" />
+    @can('manage-campeonato', $campeonato)
+    @php
+        $nextOrder = (isset($fases) && $fases instanceof \Illuminate\Support\Collection && $fases->count() > 0)
+            ? ($fases->max('orden') + 1)
+            : 1;
+    @endphp
+    <x-modal name="create-playoff-phase-modal" focusable>
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900">
+                Crear Jornada de Playoffs
+            </h2>
+            <p class="mt-1 text-sm text-gray-600">
+                Ingresa el nombre de la jornada (por ejemplo: Cuartos de final, Semifinal, Final).
+            </p>
+
+            <form method="POST" action="{{ route('campeonatos.fases.store', $campeonato) }}" class="mt-6 space-y-4">
+                @csrf
+                <div>
+                    <label for="nombre_jornada" class="block text-sm font-medium text-gray-700">Nombre de la Jornada</label>
+                    <input id="nombre_jornada" name="nombre" type="text" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ej: Cuartos de final">
+                </div>
+
+                <input type="hidden" name="orden" value="{{ $nextOrder }}">
+                <input type="hidden" name="tipo" value="eliminatoria">
+                <input type="hidden" name="estado" value="activa">
+
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" @click="$dispatch('close-modal', 'create-playoff-phase-modal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Crear</button>
+                </div>
+            </form>
+        </div>
+    </x-modal>
+    @endcan
     <x-share-modal />
 
     <script>

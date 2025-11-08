@@ -39,7 +39,7 @@ class CampeonatoController extends Controller
     public function publicShare(Campeonato $campeonato)
     {
         // Cargar relaciones para optimizar consultas
-        $campeonato->load('equipos', 'partidos.estadisticasJugadores.jugador', 'organizador');
+        $campeonato->load('equipos', 'partidos.estadisticasJugadores.jugador', 'partidos.fase', 'organizador');
 
         // Lógica para obtener goleadores, tabla de posiciones, etc.
         $goleadores = $this->getGoleadores($campeonato);
@@ -211,7 +211,16 @@ class CampeonatoController extends Controller
             }
         }
 
-        $campeonato->load('organizador', 'delegates', 'partidos.equipoLocal', 'partidos.equipoVisitante', 'fases'); // Load organizador, delegates, matches, and phases. Removed .jugadores from partidos relations as it's not directly used here and can be heavy.
+        $campeonato->load(
+            'organizador',
+            'delegates',
+            'partidos.equipoLocal',
+            'partidos.equipoVisitante',
+            'partidos.fase',
+            'fases',
+            'fases.partidos.equipoLocal',
+            'fases.partidos.equipoVisitante'
+        ); // Load organizador, delegates, matches, and phases (including playoff matches with teams)
 
         // Calculate standings
         $standings = $campeonato->getStandings();

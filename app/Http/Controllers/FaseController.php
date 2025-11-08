@@ -30,9 +30,10 @@ class FaseController extends Controller
             'estado' => 'required|string|in:pendiente,activa,finalizada',
         ]);
 
-        $campeonato->fases()->create($validated);
+        $fase = $campeonato->fases()->create($validated);
 
-        return redirect()->route('campeonatos.show', $campeonato)->with('success', 'Fase creada exitosamente.');
+        return redirect()->route('campeonatos.fases.show', [$campeonato, $fase])
+            ->with('success', 'Fase creada exitosamente. Ahora puedes crear los partidos de esta jornada.');
     }
 
     /**
