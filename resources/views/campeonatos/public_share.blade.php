@@ -1,14 +1,25 @@
 <x-guest-layout>
     @php
-        // Particionar partidos en finalizados y próximos
-        [$partidosFinalizados, $partidosProximos] = $campeonato->partidos->partition(function ($partido) {
-            return $partido->estado === 'finalizado';
-        });
+    // Particionar todos los partidos en finalizados y próximos
+    [$partidosFinalizados, $partidosProximos] = $campeonato->partidos->partition(function ($partido) {
+        return $partido->estado === 'finalizado';
+    });
 
-        // Agrupar por jornada
-        $finalizadosPorJornada = $partidosFinalizados->sortBy('jornada')->groupBy('jornada');
-        $proximosPorJornada = $partidosProximos->sortBy('jornada')->groupBy('jornada');
-    @endphp
+    // Filtrar partidos de fase de grupos y agrupar por jornada
+    $finalizadosPorJornada = $partidosFinalizados
+        ->filter(function ($partido) {
+            return optional($partido->fase)->tipo !== 'eliminatoria';
+        })
+        ->sortBy('jornada')
+        ->groupBy('jornada');
+
+    $proximosPorJornada = $partidosProximos
+        ->filter(function ($partido) {
+            return optional($partido->fase)->tipo !== 'eliminatoria';
+        })
+        ->sortBy('jornada')
+        ->groupBy('jornada');
+@endphp
 
     <div class="bg-gray-900 text-gray-300 font-sans relative min-h-screen">
         @guest
@@ -71,13 +82,116 @@
 
                 <!-- Contenido de Partidos Próximos -->
                 <div x-show="activeTab === 'proximos'" x-cloak>
-                    <div x-data="{ openJornada: {{ $proximosPorJornada->keys()->first() ?? 'null' }} }">
-                        @forelse($proximosPorJornada as $jornada => $matches)
-                            @include('campeonatos.partials._jornada_accordion', ['jornada' => $jornada, 'matches' => $matches, 'campeonato' => $campeonato, 'isResultados' => false])
-                        @empty
-                            <p class="text-center text-gray-500 p-4">No hay próximos partidos programados.</p>
-                        @endforelse
-                    </div>
+                    @php
+                        $playoffFases = $campeonato->fases ? $campeonato->fases->where('tipo', 'eliminatoria')->sortBy('orden') : collect();
+                        $totalProximosPlayoffs = 0;
+                        if ($playoffFases->count() > 0) {
+                            foreach ($playoffFases as $fase) {
+                                $totalProximosPlayoffs += $fase->partidos->where('estado', '!=', 'finalizado')->count();
+                            }
+                        }
+                    @endphp
+
+                    @if($proximosPorJornada->isEmpty() && $totalProximosPlayoffs === 0)
+                        <p class="text-center text-gray-500 p-4">No hay próximos partidos programados.</p>
+                    @else
+                        <div x-data="{ openJornada: {{ $proximosPorJornada->keys()->first() ?? 'null' }} }">
+                            @foreach($proximosPorJornada as $jornada => $matches)
+                                @include('campeonatos.partials._jornada_accordion', ['jornada' => $jornada, 'matches' => $matches, 'campeonato' => $campeonato, 'isResultados' => false])
+                            @endforeach
+                        </div>
+
+                        @if($totalProximosPlayoffs > 0)
+                            <div class="mt-8 bg-gray-800 rounded-lg shadow-md">
+                                <div class="p-4 bg-gray-700/50 text-white font-bold text-lg rounded-t-lg flex justify-between items-center">
+                                    <h2>Fase Eliminatoria: Próximos</h2>
+                                </div>
+                                <div class="p-0">
+                                    @foreach($playoffFases as $fase)
+                                        @php
+                                            $partidosFase = $fase->partidos->where('estado', '!=', 'finalizado')->sortBy('fecha_partido');
+                                        @endphp
+                                        @if($partidosFase->count() > 0)
+                                            <div class="py-3 bg-gray-800/50 rounded-lg mb-4">
+                                                <div class="px-4 flex items-center justify-between mb-3">
+                                                    <h3 class="text-base font-semibold text-gray-200">{{ $fase->nombre }}</h3>
+                                                </div>
+                                                @php
+                                                    $partidosAgrupados = $partidosFase->groupBy(function($partido) {
+                                                        $fecha = $partido->fecha_partido ? \Carbon\Carbon::parse($partido->fecha_partido)->format('Y-m-d') : 'sin_fecha';
+                                                        $ubicacion = $partido->ubicacion_partido ?? 'sin_ubicacion';
+                                                        return $fecha . '|' . $ubicacion;
+                                                    });
+                                                @endphp
+
+                                                @foreach($partidosAgrupados as $grupoKey => $partidosDelGrupo)
+                                                    @php
+                                                        [$fecha, $ubicacion] = explode('|', $grupoKey);
+                                                    @endphp
+                                                    <div class="mt-3">
+                                                        <div class="px-4 pb-2">
+                                                            <div class="flex justify-between items-center text-xs text-gray-400 border-b border-gray-700 pb-2">
+                                                                <span class="flex items-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                                    {{ $fecha !== 'sin_fecha' ? \Carbon\Carbon::parse($fecha)->translatedFormat('D, d M Y') : 'Fecha por definir' }}
+                                                                </span>
+                                                                <span class="text-right flex items-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                                    {{ $ubicacion !== 'sin_ubicacion' ? $ubicacion : 'Ubicación por definir' }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="px-4 pt-2 space-y-2">
+                                                            @foreach($partidosDelGrupo as $partido)
+                                                                <a href="{{ route('partidos.public_show', ['partido' => $partido->id]) }}" class="block rounded-lg bg-gray-900 hover:bg-gray-700/80 transition-colors">
+                                                                    <div class="p-3">
+                                                                        <div class="grid grid-cols-3 items-center gap-2">
+                                                                            <div class="text-left font-semibold text-gray-100 leading-tight break-words flex items-center">
+                                                                                <img src="{{ optional($partido->equipoLocal)->imagen_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoLocal)->nombre ?? 'TBD') }}" alt="{{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}" class="w-6 h-6 mr-2 rounded-full object-cover border-2 border-gray-600">
+                                                                                <span>{{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}</span>
+                                                                            </div>
+                                                                            <div class="text-center">
+                                                                                @php
+                                                                                    $isLiveOrSuspended = in_array($partido->estado, ['en_curso', 'suspendido']);
+                                                                                    $hasScore = !is_null($partido->goles_local) && !is_null($partido->goles_visitante);
+                                                                                @endphp
+
+                                                                                @if($isLiveOrSuspended && $hasScore)
+                                                                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-gray-200 text-gray-900 font-extrabold text-md">
+                                                                                        {{ $partido->goles_local }} : {{ $partido->goles_visitante }}
+                                                                                    </span>
+                                                                                @else
+                                                                                    <span class="text-xl font-bold text-gray-100">
+                                                                                        {{ $partido->fecha_partido ? \Carbon\Carbon::parse($partido->fecha_partido)->format('H:i') : '-:-' }}
+                                                                                    </span>
+                                                                                @endif
+
+                                                                                <div class="text-[10px] uppercase mt-1 font-semibold">
+                                                                                    @switch($partido->estado)
+                                                                                        @case('suspendido') <span class="text-yellow-400">Suspendido</span> @break
+                                                                                        @case('en_curso') <span class="text-red-500 animate-pulse">En vivo</span> @break
+                                                                                        @default <span class="text-gray-400">Programado</span>
+                                                                                    @endswitch
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="text-right font-semibold text-gray-100 leading-tight break-words flex items-center justify-end">
+                                                                                <span>{{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}</span>
+                                                                                <img src="{{ optional($partido->equipoVisitante)->imagen_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoVisitante)->nombre ?? 'TBD') }}" alt="{{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}" class="w-6 h-6 ml-2 rounded-full object-cover border-2 border-gray-600">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </a>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endif
                 </div>
 
                 <!-- Contenido de Resultados -->
@@ -86,9 +200,70 @@
                         @forelse($finalizadosPorJornada as $jornada => $matches)
                             @include('campeonatos.partials._jornada_accordion', ['jornada' => $jornada, 'matches' => $matches, 'campeonato' => $campeonato, 'isResultados' => true])
                         @empty
-                            <p class="text-center text-gray-500 p-4">No hay resultados de partidos todavía.</p>
+                            <p class="text-center text-gray-500 p-4">No hay resultados de partidos de fase de grupos todavía.</p>
                         @endforelse
                     </div>
+
+                    {{-- Fase Eliminatoria: Resultados --}}
+                    @php
+                        $playoffFasesResultados = $campeonato->fases ? $campeonato->fases->where('tipo', 'eliminatoria')->sortBy('orden') : collect();
+                        $totalResultadosPlayoffs = 0;
+                        if ($playoffFasesResultados->count() > 0) {
+                            foreach ($playoffFasesResultados as $fase) {
+                                $totalResultadosPlayoffs += $fase->partidos->where('estado', 'finalizado')->count();
+                            }
+                        }
+                    @endphp
+
+                    @if($totalResultadosPlayoffs > 0)
+                        <div class="mt-8 bg-gray-800 rounded-lg shadow-md">
+                            <div class="p-4 bg-gray-700/50 text-white font-bold text-lg rounded-t-lg flex justify-between items-center">
+                                <h2>Fase Eliminatoria: Resultados</h2>
+                            </div>
+                            <div class="p-0 divide-y divide-gray-700">
+                                @foreach($playoffFasesResultados as $fase)
+                                    @php
+                                        $partidosFase = $fase->partidos->where('estado', 'finalizado')->sortByDesc('fecha_partido');
+                                    @endphp
+                                    @if($partidosFase->count() > 0)
+                                        <div class="px-4 py-3 bg-gray-900/30">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <h3 class="text-base font-semibold text-gray-200">{{ $fase->nombre }}</h3>
+                                            </div>
+                                            <div class="space-y-2">
+                                                @foreach($partidosFase as $partido)
+                                                    <a href="{{ route('partidos.public_show', ['partido' => $partido->id]) }}" class="block rounded-lg bg-gray-900 hover:bg-gray-800 transition-colors">
+                                                        <div class="p-4">
+                                                            <div class="flex justify-between text-xs text-gray-400 mb-2">
+                                                                <span>{{ $partido->fecha_partido ? \Carbon\Carbon::parse($partido->fecha_partido)->translatedFormat('ddd. DD MMM') : 'Fecha no disponible' }}</span>
+                                                                <span class="text-right">{{ $partido->ubicacion_partido ? 'Campo deportivo - ' . $partido->ubicacion_partido : 'Ubicación no disponible' }}</span>
+                                                            </div>
+                                                            <div class="grid grid-cols-3 items-center">
+                                                                <div class="text-left font-semibold text-gray-100 leading-tight break-words">
+                                                                    {{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}
+                                                                </div>
+                                                                <div class="text-center">
+                                                                    <span class="inline-flex items-center justify-center px-3 py-1 rounded-md bg-gray-200 text-gray-900 font-extrabold text-lg">
+                                                                        {{ $partido->goles_local ?? '0' }} : {{ $partido->goles_visitante ?? '0' }}
+                                                                    </span>
+                                                                    <div class="text-[10px] uppercase mt-1 text-green-400">
+                                                                        Finalizado
+                                                                    </div>
+                                                                </div>
+                                                                <div class="text-right font-semibold text-gray-100 leading-tight break-words">
+                                                                    {{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
