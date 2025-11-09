@@ -35,7 +35,7 @@
         </div>
 
         <!-- Players Grid Section -->
-        <section class="mb-12" x-data="{ open: window.innerWidth >= 768, scrolling: false }" @resize.window="open = window.innerWidth >= 768">
+        <section class="mb-12" x-data="{ open: window.innerWidth >= 768, scrolling: false }" @resize.window="if (window.innerWidth >= 768) open = true">
             <div @touchstart="scrolling = false" @touchmove="scrolling = true" @click="if (!scrolling) open = !open" class="flex justify-between items-center cursor-pointer bg-gray-100 p-4 rounded-lg shadow hover:bg-gray-200 transition mb-4">
                 <h2 class="text-xl md:text-2xl font-bold text-copa-blue-900">Plantilla de Jugadores ({{ $jugadores->count() }})</h2>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-copa-blue-900 transition-transform duration-300" :class="{ 'rotate-180': open }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>

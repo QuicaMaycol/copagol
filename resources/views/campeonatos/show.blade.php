@@ -483,7 +483,6 @@
                                                 <div class="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-md flex items-center justify-between">
                                                     <div class="flex items-center space-x-3">
                                                         <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $fase->nombre }}</h4>
-                                                        <span class="text-xs px-2 py-1 rounded-full {{ $fase->estado === 'finalizada' ? 'bg-green-100 text-green-800' : ($fase->estado === 'activa' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') }}">{{ ucfirst($fase->estado) }}</span>
                                                     </div>
                                                     @can('manage-campeonato', $campeonato)
                                                         <a href="{{ route('campeonatos.fases.show', [$campeonato, $fase]) }}" class="text-sm text-blue-600 hover:text-blue-700">Administrar</a>
@@ -491,29 +490,30 @@
                                                 </div>
                                                 <div class="divide-y divide-gray-200 dark:divide-gray-700">
                                                     @foreach($partidosFase as $partido)
-                                                    <div id="partido-{{ $partido->id }}" class="px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                                        <div class="flex items-center space-x-3 w-2/5">
-                                                            <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoLocal && $partido->equipoLocal->imagen_url ? $partido->equipoLocal->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoLocal)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
-                                                            <span class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}</span>
+                                                    <div id="partido-{{ $partido->id }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-700 flex flex-col gap-2">
+                                                        <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mb-1">
+                                                            <span class="truncate">{{ $fase->nombre }}</span>
+                                                            <span class="px-2 py-0.5 rounded-full font-semibold {{ $fase->estado === 'finalizada' ? 'bg-green-100 text-green-700' : ($fase->estado === 'activa' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700') }}">{{ ucfirst($fase->estado) }}</span>
                                                         </div>
-                                                        <div class="w-1/5 text-center">
+                                                        <div class="text-gray-900 dark:text-gray-100">
+                                                            <p class="text-base font-semibold leading-tight truncate">{{ optional($partido->equipoLocal)->nombre ?? 'TBD' }}</p>
+                                                            <p class="text-lg font-extrabold leading-tight truncate">vs {{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}</p>
+                                                        <div class="w-full text-center order-3 md:order-none">
                                                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $partido->fecha_partido ? \Carbon\Carbon::parse($partido->fecha_partido)->format('d/m H:i') : 'Por definir' }}</span>
                                                             <div class="text-xs text-gray-500">{{ $partido->ubicacion_partido ?: 'Ubicación por definir' }}</div>
                                                         </div>
-                                                        <div class="flex items-center space-x-3 justify-end w-2/5">
-                                                            <span class="font-medium text-gray-900 dark:text-gray-100 truncate text-right">{{ optional($partido->equipoVisitante)->nombre ?? 'TBD' }}</span>
-                                                            <img class="h-8 w-8 rounded-full object-cover border" src="{{ $partido->equipoVisitante && $partido->equipoVisitante->imagen_url ? $partido->equipoVisitante->imagen_url : 'https://ui-avatars.com/api/?name=' . urlencode(optional($partido->equipoVisitante)->nombre) . '&color=7F9CF5&background=EBF4FF' }}" alt="">
                                                         </div>
-                                                        <div class="flex items-center space-x-2 flex-shrink-0 ml-4">
-                                                            <button @click="getSancionados({{ $partido->id }})" class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-full transition-colors duration-300" title="Ver Sancionados">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                                        <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                                                        <div class="flex items-center justify-center gap-3 w-full mt-1 order-2 md:order-none">
+                                                            <button @click="getSancionados({{ $partido->id }})" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-blue-600/10 text-blue-700 hover:bg-blue-600/20 transition" title="Ver Sancionados">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                                             </button>
                                                             @can('manage-campeonato', $campeonato)
-                                                            <a href="{{ route('partidos.edit', $partido) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full transition-colors duration-300" title="Editar Partido">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                            <a href="{{ route('partidos.edit', $partido) }}" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20 transition" title="Editar Partido">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                             </a>
-                                                            <button @click="showDeleteModal = true; deleteUrl = '{{ route('partidos.destroy', $partido) }}'; partidoElementId = 'partido-{{ $partido->id }}';" type="button" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors duration-300" title="Eliminar Partido">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                            <button @click="showDeleteModal = true; deleteUrl = '{{ route('partidos.destroy', $partido) }}'; partidoElementId = 'partido-{{ $partido->id }}';" type="button" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-red-600/10 text-red-700 hover:bg-red-600/20 transition" title="Eliminar Partido">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                                             </button>
                                                             @endcan
                                                         </div>
